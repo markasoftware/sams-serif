@@ -8,6 +8,7 @@ test('BOX: Get properties', t => {
   t.deepEqual(box.getCenter(), { x: 5, y: 5 })
   t.deepEqual(box.getDimensions(), { x: 10, y: 10 })
   t.deepEqual(box.getBounds(), { x0: 0, x1: 10, y0: 0, y1: 10 })
+  t.equal(box.getRadius(), Math.sqrt(200) / 2)
 
   const otherBox = new Box({ x0: 10, x1: 20, y0: 10, y1: 20 })
   t.deepEqual(otherBox.getCenter(), { x: 15, y: 15 })

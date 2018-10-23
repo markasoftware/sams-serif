@@ -12,12 +12,18 @@ module.exports = class Panhandler extends Box {
     this.scalePerPixel = opts.scalePerPixel || 1.005
 
     this.dragState = false
+    this.cbs = []
+  }
+  
+  addListener(cb) {
+    this.cbs.push(cb)
   }
 
   linkEl (el) {
     el.addEventListener('wheel', e => {
       e.preventDefault()
       super.scale(this._wheelToScale(e))
+      this._triggerListeners()
     })
     el.addEventListener('mousedown', e => {
       this.dragStart(e.clientX, e.clientY)
@@ -25,13 +31,16 @@ module.exports = class Panhandler extends Box {
     el.addEventListener('mousemove', e => {
       if (this.isDragging()) {
         this.dragUpdate(e.clientX, e.clientY)
+        this._triggerListeners()
       }
     })
     el.addEventListener('mouseup', e => {
       this.dragEnd()
+      this._triggerListeners()
     })
     el.addEventListener('mouseleave', e => {
       this.dragEnd()
+      this._triggerListeners()
     })
   }
 
