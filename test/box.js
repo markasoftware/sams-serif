@@ -22,6 +22,8 @@ test('BOX: scale', t => {
   t.deepEqual(box.getBounds(), { x0: 2.5, x1: 7.5, y0: 2.5, y1: 7.5 })
   box.scale(4)
   t.deepEqual(box.getBounds(), { x0: -5, x1: 15, y0: -5, y1: 15 })
+  box.scale(2, { x: 0, y: 0 })
+  t.deepEqual(box.getBounds(), { x0: -10, x1: 30, y0: -10, y1: 30 })
 
   const otherBox = new Box({ x0: 50, x1: 150, y0: 100, y1: 200 })
   otherBox.scale(0.5)

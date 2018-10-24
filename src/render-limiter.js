@@ -17,8 +17,13 @@ module.exports = class RenderLimiter {
   }
 
   setupStroke (box) {
+    this.canvasCtx.beginPath()
     this.canvasCtx.lineWidth = this.widthOverRadius * box.getRadius()
     const strokeIntensity = 255 - R.clamp(0, 255, Math.round((box.getRadius() - this.minRadius) / (this.minBlackRadius - this.minRadius) * 255))
     this.canvasCtx.strokeStyle = `rgb(${strokeIntensity},${strokeIntensity},${strokeIntensity})`
+  }
+
+  endStroke() {
+    this.canvasCtx.stroke()
   }
 }

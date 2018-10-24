@@ -11,6 +11,8 @@ module.exports = class Panhandler extends Box {
     this.pixelsPerPage = opts.pixelsPerPage || 1000
     this.scalePerPixel = opts.scalePerPixel || 1.005
 
+    this.mouseX = 0
+    this.mouseY = 0
     this.dragState = false
     this.cbs = []
   }
@@ -26,25 +28,19 @@ module.exports = class Panhandler extends Box {
   linkEl (el) {
     el.addEventListener('wheel', e => {
       e.preventDefault()
-      super.scale(this._wheelToScale(e))
-      this._triggerListeners()
+      this._scaleWithMouse(this._wheelToScale(e))
     })
     el.addEventListener('mousedown', e => {
-      this.dragStart(e.clientX, e.clientY)
+      this.dragStart()
     })
     el.addEventListener('mousemove', e => {
-      if (this.isDragging()) {
-        this.dragUpdate(e.clientX, e.clientY)
-        this._triggerListeners()
-      }
+      this._mouseUpdate(e.clientX, e.clientY)
     })
     el.addEventListener('mouseup', e => {
       this.dragEnd()
-      this._triggerListeners()
     })
     el.addEventListener('mouseleave', e => {
       this.dragEnd()
-      this._triggerListeners()
     })
   }
 
@@ -54,18 +50,28 @@ module.exports = class Panhandler extends Box {
     return this.scalePerPixel ** scrollPixels
   }
 
+  _scaleWithMouse(scaleFrac) {
+    this.scale(scaleFrac, { x: this.mouseX, y: this.mouseY } )
+    this._triggerListeners()
+  }
+
+  _mouseUpdate(x, y) {
+    const oldX = this.mouseX
+    const oldY = this.mouseY
+    this.mouseX = x
+    this.mouseY = y
+    if (this.isDragging()) {
+      this.pan(x - oldX, y - oldY)
+      this._triggerListeners()
+    }
+  }
+
   isDragging () {
     return !!this.dragState
   }
 
-  dragStart (x, y) {
-    this.dragState = { x, y }
-  }
-
-  dragUpdate (x, y) {
-    assert(this.isDragging())
-    super.pan(x - this.dragState.x, y - this.dragState.y)
-    this.dragState = { x, y }
+  dragStart () {
+    this.dragState = true
   }
 
   dragEnd () {

@@ -15,9 +15,9 @@ module.exports = class Renderer {
       horizontalSpacing: 100,
       verticalSpacing: 100,
       widthOverRadius: 0.05,
-      minBlackRadius: 150,
-      textHeight: 250,
-      minRadius: 10
+      minBlackRadius: 5,
+      textHeightFrac: 0.7,
+      minRadius: 1
     }, optsArg)
   }
 
@@ -32,8 +32,6 @@ module.exports = class Renderer {
 
       curLeft += charWidth + this.horizontalSpacing
     })
-
-    this._closeCanvas()
   }
 
   _resetCanvas () {
@@ -42,18 +40,15 @@ module.exports = class Renderer {
     this.canvasCtx.beginPath()
   }
 
-  _closeCanvas () {
-    this.canvasCtx.stroke()
-  }
-
   // @return width of character
   _renderChar (char, x0, y0) {
     const fontChar = this.font[char]
     if (!fontChar) {
       return
     }
-    const charWidth = this.textHeight * fontChar.ratio
-    const charBox = new Box({ x0, y0, x1: x0 + charWidth, y1: y0 + this.textHeight })
+    const charHeight = this.textHeightFrac * this.origViewport.getDimensions().y
+    const charWidth = charHeight * fontChar.ratio
+    const charBox = new Box({ x0, y0, x1: x0 + charWidth, y1: y0 + charHeight })
 
     const renderLimiter = new RenderLimiter(this.canvasCtx, this.canvasViewport, this.widthOverRadius, this.minRadius, this.minBlackRadius)
 
