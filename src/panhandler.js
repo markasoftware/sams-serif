@@ -14,9 +14,13 @@ module.exports = class Panhandler extends Box {
     this.dragState = false
     this.cbs = []
   }
-  
-  addListener(cb) {
+
+  addListener (cb) {
     this.cbs.push(cb)
+  }
+
+  _triggerListeners() {
+    this.cbs.forEach(cb => cb())
   }
 
   linkEl (el) {

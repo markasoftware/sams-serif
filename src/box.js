@@ -9,6 +9,8 @@ const pickBounds = R.pick(['x0', 'x1', 'y0', 'y1'])
 
 module.exports = class Box {
   constructor (bounds) {
+    assert(typeof bounds === 'object')
+    assert(['x0', 'x1', 'y0', 'y1'].every(c => c in bounds))
     assert(bounds.y1 >= bounds.y0 && bounds.x1 >= bounds.x0)
     Object.assign(this, pickBounds(bounds))
   }
