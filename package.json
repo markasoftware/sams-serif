@@ -1,13 +1,11 @@
 {
   "scripts": {
     "test": "tape test/*.js | tap-summary",
-    "watch": "parcel src/index.html"
+    "build": "cp src/index.html dist && browserify -o dist/bundle.js src/main.js",
+    "watch": "find src | entr npm run build"
   },
   "dependencies": {
-    "lazy-ass": "^1.6.0",
-    "parcel": "^1.10.3",
-    "ramda": "^0.25.0",
-    "sass": "^1.14.3",
+    "browserify": "^16.2.3",
     "standard": "^12.0.1",
     "tap-summary": "^4.0.0",
     "tape": "^4.9.1"

@@ -1,6 +1,5 @@
 'use strict'
 
-const R = require('ramda')
 const Box = require('./box')
 const RenderLimiter = require('./render-limiter')
 
@@ -12,8 +11,8 @@ module.exports = class Renderer {
     this.origViewport = origViewport
     this.canvasCtx = canvasCtx
     Object.assign(this, {
-      horizontalSpacing: 100,
-      verticalSpacing: 100,
+      horizontalSpacing: 1.3,
+      verticalSpacing: 1.3,
       widthOverRadius: 0.05,
       minBlackRadius: 5,
       textHeightFrac: 0.7,
@@ -30,7 +29,7 @@ module.exports = class Renderer {
     this.text.split('').forEach(char => {
       const charWidth = this._renderChar(char, curLeft, curTop)
 
-      curLeft += charWidth + this.horizontalSpacing
+      curLeft += charWidth * this.horizontalSpacing
     })
   }
 

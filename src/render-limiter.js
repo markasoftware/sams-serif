@@ -1,7 +1,8 @@
 'use strict'
 
-const R = require('ramda')
 const Box = require('./box')
+
+const clamp = (low, hi, mid) => mid > hi ? hi : mid < low ? low : mid
 
 module.exports = class RenderLimiter {
   constructor (canvasCtx, canvasViewport, widthOverRadius, minRadius, minBlackRadius) {
@@ -16,14 +17,11 @@ module.exports = class RenderLimiter {
     return Box.boundsIntersect(this.canvasViewport.getBounds(), box.getBounds()) && box.getRadius() >= this.minRadius
   }
 
-  setupStroke (box) {
-    this.canvasCtx.beginPath()
+  endStroke(box) {
     this.canvasCtx.lineWidth = this.widthOverRadius * box.getRadius()
-    const strokeIntensity = 255 - R.clamp(0, 255, Math.round((box.getRadius() - this.minRadius) / (this.minBlackRadius - this.minRadius) * 255))
+    const strokeIntensity = 255 - clamp(0, 255, Math.round((box.getRadius() - this.minRadius) / (this.minBlackRadius - this.minRadius) * 255))
     this.canvasCtx.strokeStyle = `rgb(${strokeIntensity},${strokeIntensity},${strokeIntensity})`
-  }
-
-  endStroke() {
     this.canvasCtx.stroke()
+    this.canvasCtx.beginPath()
   }
 }

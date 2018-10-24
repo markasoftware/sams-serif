@@ -1,22 +1,22 @@
 'use strict'
 
-const assert = require('lazy-ass')
-const R = require('ramda')
+const assert = require('assert')
 
 // bounds is {x0, y0, x1, y1}
-
-const pickBounds = R.pick(['x0', 'x1', 'y0', 'y1'])
 
 module.exports = class Box {
   constructor (bounds) {
     assert(typeof bounds === 'object')
     assert(['x0', 'x1', 'y0', 'y1'].every(c => c in bounds))
     assert(bounds.y1 >= bounds.y0 && bounds.x1 >= bounds.x0, 'bounds not rectagonal')
-    Object.assign(this, pickBounds(bounds))
+    this.x0 = bounds.x0
+    this.x1 = bounds.x1
+    this.y0 = bounds.y0
+    this.y1 = bounds.y1
   }
 
   getBounds () {
-    return pickBounds(this)
+    return { x0: this.x0, x1: this.x1, y0: this.y0, y1: this.y1 }
   }
 
   getRadius () {

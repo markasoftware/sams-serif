@@ -7,7 +7,7 @@ const samsSerif = {
     ratio: 0.7,
     render: (ctx, origBox, limiter) => {
       // BEGIN CONFIGURATION
-      const childWidthCoefficient = 0.4
+      const childWidthCoefficient = 0.45
       // END CONFIGURATION
 
       // scaling a box around the main I by this will make it contain all children.
@@ -33,14 +33,13 @@ const samsSerif = {
         if (!limiter.shouldRender(boxWithChildren)) {
           return
         }
-        limiter.setupStroke(box)
         ctx.moveTo(bounds.x0, bounds.y0)
         ctx.lineTo(bounds.x1, bounds.y0)
         ctx.moveTo(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0)
         ctx.lineTo(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y1)
         ctx.moveTo(bounds.x0, bounds.y1)
         ctx.lineTo(bounds.x1, bounds.y1)
-        limiter.endStroke()
+        limiter.endStroke(box)
 
         const childVR = verticalRadius * childWidthCoefficient
         renderByCenter(bounds.x0, bounds.y0, childVR)
