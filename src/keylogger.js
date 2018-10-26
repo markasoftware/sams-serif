@@ -1,6 +1,6 @@
 'use strict'
 
-const assert = require('lazy-ass')
+const assert = require('assert')
 
 module.exports = class Keylogger {
   constructor () {

@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('lazy-ass')
 const Box = require('./box')
 
 module.exports = class Panhandler extends Box {
@@ -21,7 +20,7 @@ module.exports = class Panhandler extends Box {
     this.cbs.push(cb)
   }
 
-  _triggerListeners() {
+  _triggerListeners () {
     this.cbs.forEach(cb => cb())
   }
 
@@ -50,12 +49,12 @@ module.exports = class Panhandler extends Box {
     return this.scalePerPixel ** scrollPixels
   }
 
-  _scaleWithMouse(scaleFrac) {
-    this.scale(scaleFrac, { x: this.mouseX, y: this.mouseY } )
+  _scaleWithMouse (scaleFrac) {
+    this.scale(scaleFrac, { x: this.mouseX, y: this.mouseY })
     this._triggerListeners()
   }
 
-  _mouseUpdate(x, y) {
+  _mouseUpdate (x, y) {
     const oldX = this.mouseX
     const oldY = this.mouseY
     this.mouseX = x

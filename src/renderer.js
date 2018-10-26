@@ -4,20 +4,13 @@ const Box = require('./box')
 const RenderLimiter = require('./render-limiter')
 
 module.exports = class Renderer {
-  constructor (font, text, canvasCtx, canvasViewport, origViewport, optsArg = {}) {
+  constructor (font, text, canvasCtx, canvasViewport, origViewport, optsArg) {
     this.font = font
     this.text = text
     this.canvasViewport = canvasViewport
     this.origViewport = origViewport
     this.canvasCtx = canvasCtx
-    Object.assign(this, {
-      horizontalSpacing: 1.3,
-      verticalSpacing: 1.3,
-      widthOverRadius: 0.05,
-      minBlackRadius: 5,
-      textHeightFrac: 0.7,
-      minRadius: 1
-    }, optsArg)
+    Object.assign(this, optsArg)
   }
 
   render () {
