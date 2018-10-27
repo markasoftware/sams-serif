@@ -45,7 +45,7 @@ module.exports = class Panhandler extends Box {
 
   _wheelToScale (e) {
     // DOM_DELTA_PIXEL: 0, _LINE: 1, _PAGE: 2
-    const scrollPixels = e.deltaY * [1, this.pixelsPerLine, this.pixelsPerPage][e.deltaMode]
+    const scrollPixels = (-e.deltaY) * [1, this.pixelsPerLine, this.pixelsPerPage][e.deltaMode]
     return this.scalePerPixel ** scrollPixels
   }
 

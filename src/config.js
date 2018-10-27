@@ -10,7 +10,7 @@ module.exports = class Config {
       widthOverRadius: 0.05,
       minBlackRadius: 17,
       textHeightFrac: 0.7,
-      minRadius: 1
+      minRadius: 2
     }
     this.samsSerifConfig = {
       standardRatio: 0.7,

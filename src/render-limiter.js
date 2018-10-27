@@ -13,23 +13,22 @@ module.exports = class RenderLimiter {
     this.minBlackRadius = minBlackRadius
   }
 
+  shouldRenderRadius(radius) {
+    return radius >= this.minRadius
+  }
+
   shouldRender (box) {
     return Box.boundsIntersect(this.canvasViewport.getBounds(), box.getBounds()) && box.getRadius() >= this.minRadius
   }
 
-  preDraw (box) {
-    this.lineWidth = Math.ceil(this.widthOverRadius * box.getRadius())
-    const strokeIntensity = 255 - clamp(0, 255, Math.round((box.getRadius() - this.minRadius) / (this.minBlackRadius - this.minRadius) * 255))
+  preDraw (radius) {
+    this.lineWidth = Math.ceil(this.widthOverRadius * radius)
+    const strokeIntensity = 255 - clamp(0, 255, Math.round((radius - this.minRadius) / (this.minBlackRadius - this.minRadius) * 255))
     this.color = `rgb(${strokeIntensity},${strokeIntensity},${strokeIntensity})`
 
     this.canvasCtx.lineWidth = this.lineWidth
     this.canvasCtx.strokeStyle = this.color
     this.canvasCtx.fillStyle = this.color
-
-    return {
-      width: this.lineWidth,
-      color: this.color,
-    }
   }
 
   drawVerticalLine (x, y, length) {

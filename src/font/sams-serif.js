@@ -6,6 +6,8 @@ const samsSerif = opts => ({
   'I': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
+      let findChildrenCount = 0
+      let renderCount = 0
       // BEGIN CONFIGURATION
       const childWidthCoefficient = opts.IChildSize
       // END CONFIGURATION
@@ -16,9 +18,19 @@ const samsSerif = opts => ({
       const dim = origBox.getDimensions()
       const bounds = origBox.getBounds()
 
-      renderByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
+      // queue items: Box
+      const queue = []
+      // so nothing is equal to it, hehehe
+      let lastRenderedRadius = NaN
 
-      function renderByCenter (x, y, verticalRadius) {
+      const allIs = []
+      findChildrenByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
+      allIs
+        .sort((a, b) => a.getRadius() - b.getRadius())
+        .forEach(qItem => renderI(qItem))
+
+      function findChildrenByCenter (x, y, verticalRadius) {
+        findChildrenCount++
         const horizontalRadius = verticalRadius * opts.standardRatio
         const bounds = {
           x0: x - horizontalRadius,
@@ -35,16 +47,28 @@ const samsSerif = opts => ({
         }
         // draw children first so light colored stuff doesn't overdraw our rects
         const childVR = verticalRadius * childWidthCoefficient
-        renderByCenter(bounds.x0, bounds.y0, childVR)
-        renderByCenter(bounds.x1, bounds.y0, childVR)
-        renderByCenter(bounds.x1, bounds.y1, childVR)
-        renderByCenter(bounds.x0, bounds.y1, childVR)
+        allIs.push(box)
+        if (limiter.shouldRenderRadius(box.getRadius() * childWidthCoefficient)) {
+          findChildrenByCenter(bounds.x0, bounds.y0, childVR)
+          findChildrenByCenter(bounds.x1, bounds.y0, childVR)
+          findChildrenByCenter(bounds.x1, bounds.y1, childVR)
+          findChildrenByCenter(bounds.x0, bounds.y1, childVR)
+        }
+      }
 
-        limiter.preDraw(box)
+      function renderI (box) {
+        renderCount++
+        const bounds = box.getBounds()
+        if (box.getRadius() !== lastRenderedRadius) {
+          lastRenderedRadius = box.getRadius()
+          limiter.preDraw(box.getRadius())
+        }
         limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
         limiter.drawHorizontalLine(bounds.x0, bounds.y1, bounds.x1 - bounds.x0)
         limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
       }
+
+      console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
     }
   },
 
@@ -84,7 +108,7 @@ const samsSerif = opts => ({
         renderByCenter(bounds.x0, bounds.y0, childVR)
         renderByCenter(bounds.x1, bounds.y0, childVR)
 
-        limiter.preDraw(box)
+        limiter.preDraw(box.getRadius())
         limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
         limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
       }
@@ -137,7 +161,7 @@ const samsSerif = opts => ({
           shouldContinue = false
           return
         }
-        limiter.preDraw(box)
+        limiter.preDraw(box.getRadius())
         const drawLine = isVertical ? limiter.drawVerticalLine.bind(limiter) : limiter.drawHorizontalLine.bind(limiter)
         drawLine(lineLeft, lineTop, curLength)
       }
