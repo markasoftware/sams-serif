@@ -2,7 +2,8 @@
   "scripts": {
     "test": "tape test/*.js | tap-summary",
     "build": "cp src/index.html dist && browserify --debug -o dist/bundle.js src/main.js",
-    "watch": "find src | entr npm run build"
+    "watch": "find src | entr npm run build",
+    "document": "esdoc"
   },
   "dependencies": {
     "browserify": "^16.2.3",

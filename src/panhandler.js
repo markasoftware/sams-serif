@@ -2,6 +2,8 @@
 
 const Box = require('./box')
 
+// general TODO: Use bigints for the viewport, and only switch to normal ints when rendering
+
 module.exports = class Panhandler extends Box {
   constructor (bounds, opts = {}) {
     super(bounds)
@@ -10,8 +12,6 @@ module.exports = class Panhandler extends Box {
     this.pixelsPerPage = opts.pixelsPerPage || 1000
     this.scalePerPixel = opts.scalePerPixel || 1.005
 
-    this.mouseX = 0
-    this.mouseY = 0
     this.dragState = false
     this.cbs = []
   }
@@ -30,16 +30,16 @@ module.exports = class Panhandler extends Box {
       this._scaleWithMouse(this._wheelToScale(e))
     })
     el.addEventListener('mousedown', e => {
-      this.dragStart()
+      this._dragStart()
     })
     el.addEventListener('mousemove', e => {
       this._mouseUpdate(e.clientX, e.clientY)
     })
     el.addEventListener('mouseup', e => {
-      this.dragEnd()
+      this._dragEnd()
     })
     el.addEventListener('mouseleave', e => {
-      this.dragEnd()
+      this._dragEnd()
     })
   }
 
@@ -59,21 +59,21 @@ module.exports = class Panhandler extends Box {
     const oldY = this.mouseY
     this.mouseX = x
     this.mouseY = y
-    if (this.isDragging()) {
+    if (this._isDragging() && typeof oldX === 'number') {
       this.pan(x - oldX, y - oldY)
       this._triggerListeners()
     }
   }
 
-  isDragging () {
+  _isDragging () {
     return !!this.dragState
   }
 
-  dragStart () {
+  _dragStart () {
     this.dragState = true
   }
 
-  dragEnd () {
+  _dragEnd () {
     this.dragState = false
   }
 }

