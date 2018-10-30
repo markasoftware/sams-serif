@@ -59,6 +59,7 @@ module.exports = class Controller {
   }
 
   _render () {
+    console.log(this.panHandler.getBounds())
     const renderer = new Renderer(
       this.font(this.config.getSamsSerifConfig()),
       this.keyLogger.getText(),

@@ -6,69 +6,7 @@ const samsSerif = opts => ({
   'I': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
-      let findChildrenCount = 0
-      let renderCount = 0
-      // BEGIN CONFIGURATION
-      const childWidthCoefficient = opts.IChildSize
-      // END CONFIGURATION
-
-      // scaling a box around the main I by this will make it contain all children.
-      // This is because infinite sum x^(-n) = 1/(x-1)
-      const addChildrenCoefficient = 1 / (1 / childWidthCoefficient - 1) + 1
-      const dim = origBox.getDimensions()
-      const bounds = origBox.getBounds()
-
-      // queue items: Box
-      const queue = []
-      // so nothing is equal to it, hehehe
-      let lastRenderedRadius = NaN
-
-      const allIs = []
-      findChildrenByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
-      allIs
-        .sort((a, b) => a.getRadius() - b.getRadius())
-        .forEach(qItem => renderI(qItem))
-
-      function findChildrenByCenter (x, y, verticalRadius) {
-        findChildrenCount++
-        const horizontalRadius = verticalRadius * opts.standardRatio
-        const bounds = {
-          x0: x - horizontalRadius,
-          x1: x + horizontalRadius,
-          y0: y - verticalRadius,
-          y1: y + verticalRadius
-        }
-        const box = new Box(bounds)
-        const boxWithChildren = new Box(bounds)
-        boxWithChildren.scale(addChildrenCoefficient)
-
-        if (!limiter.shouldRender(boxWithChildren)) {
-          return
-        }
-        // draw children first so light colored stuff doesn't overdraw our rects
-        const childVR = verticalRadius * childWidthCoefficient
-        allIs.push(box)
-        if (limiter.shouldRenderRadius(box.getRadius() * childWidthCoefficient)) {
-          findChildrenByCenter(bounds.x0, bounds.y0, childVR)
-          findChildrenByCenter(bounds.x1, bounds.y0, childVR)
-          findChildrenByCenter(bounds.x1, bounds.y1, childVR)
-          findChildrenByCenter(bounds.x0, bounds.y1, childVR)
-        }
-      }
-
-      function renderI (box) {
-        renderCount++
-        const bounds = box.getBounds()
-        if (box.getRadius() !== lastRenderedRadius) {
-          lastRenderedRadius = box.getRadius()
-          limiter.preDraw(box.getRadius())
-        }
-        limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
-        limiter.drawHorizontalLine(bounds.x0, bounds.y1, bounds.x1 - bounds.x0)
-        limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
-      }
-
-      console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
+      renderILike(ctx, origBox, limiter, true, true, opts.IChildSize, opts.standardRatio)
     }
   },
 
@@ -76,42 +14,7 @@ const samsSerif = opts => ({
   'T': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
-      // BEGIN CONFIGURATION
-      const childWidthCoefficient = opts.TChildSize
-      // END CONFIGURATION
-
-      // scaling a box around the main I by this will make it contain all children.
-      // This is because infinite sum x^(-n) = 1/(x-1)
-      const addChildrenCoefficient = 1 / (1 / childWidthCoefficient - 1) + 1
-      const dim = origBox.getDimensions()
-      const bounds = origBox.getBounds()
-
-      renderByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
-
-      function renderByCenter (x, y, verticalRadius) {
-        const horizontalRadius = verticalRadius * opts.standardRatio
-        const bounds = {
-          x0: x - horizontalRadius,
-          x1: x + horizontalRadius,
-          y0: y - verticalRadius,
-          y1: y + verticalRadius
-        }
-        const box = new Box(bounds)
-        const boxWithChildren = new Box(bounds)
-        boxWithChildren.scale(addChildrenCoefficient)
-
-        if (!limiter.shouldRender(boxWithChildren)) {
-          return
-        }
-        // draw children first so light colored stuff doesn't overdraw our rects
-        const childVR = verticalRadius * childWidthCoefficient
-        renderByCenter(bounds.x0, bounds.y0, childVR)
-        renderByCenter(bounds.x1, bounds.y0, childVR)
-
-        limiter.preDraw(box.getRadius())
-        limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
-        limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
-      }
+      renderILike(ctx, origBox, limiter, true, false, opts.TChildSize, opts.standardRatio)
     }
   },
 
@@ -166,6 +69,101 @@ const samsSerif = opts => ({
         drawLine(lineLeft, lineTop, curLength)
       }
     }
-  }
+  },
+
+  'O': {
+    ratio: 1,
+    render: (ctx, origBox, limiter) => {
+      const childWidthCoefficient = opts.OChildSize
+
+      if (!limiter.shouldRender(origBox)) {
+        return
+      }
+      const center = origBox.getCenter()
+      // the center distance from the edge is the radius
+      findChildrenByCenter(center.x, center.y, origBox.getDimensions().x / 2)
+
+      function findChildrenByCenter(x, y, radius) {
+        limiter.preDraw(radius)
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    },
+  },
 })
 module.exports = samsSerif
+
+function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize, ratio) {
+      let findChildrenCount = 0
+      let renderCount = 0
+      // BEGIN CONFIGURATION
+      const childWidthCoefficient = childSize
+      // END CONFIGURATION
+
+      // scaling a box around the main I by this will make it contain all children.
+      // This is because infinite sum x^(-n) = 1/(x-1)
+      const addChildrenCoefficient = 1 / (1 / childWidthCoefficient - 1) + 1
+      const dim = origBox.getDimensions()
+      const bounds = origBox.getBounds()
+
+      // queue items: Box
+      const queue = []
+      // so nothing is equal to it, hehehe
+      let lastRenderedRadius = NaN
+
+      const allIs = []
+      findChildrenByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
+      allIs
+        .sort((a, b) => a.getRadius() - b.getRadius())
+        .forEach(qItem => renderI(qItem))
+
+      function findChildrenByCenter (x, y, verticalRadius) {
+        findChildrenCount++
+        const horizontalRadius = verticalRadius * ratio
+        const bounds = {
+          x0: x - horizontalRadius,
+          x1: x + horizontalRadius,
+          y0: y - verticalRadius,
+          y1: y + verticalRadius
+        }
+        const box = new Box(bounds)
+        const boxWithChildren = new Box(bounds)
+        boxWithChildren.scale(addChildrenCoefficient)
+
+        if (!limiter.shouldRender(boxWithChildren)) {
+          return
+        }
+        // draw children first so light colored stuff doesn't overdraw our rects
+        const childVR = verticalRadius * childWidthCoefficient
+        allIs.push(box)
+        if (limiter.shouldRenderRadius(box.getRadius() * childWidthCoefficient)) {
+          if (renderTop) {
+            findChildrenByCenter(bounds.x0, bounds.y0, childVR)
+            findChildrenByCenter(bounds.x1, bounds.y0, childVR)
+          }
+          if (renderBottom) {
+            findChildrenByCenter(bounds.x1, bounds.y1, childVR)
+            findChildrenByCenter(bounds.x0, bounds.y1, childVR)
+          }
+        }
+      }
+
+      function renderI (box) {
+        renderCount++
+        const bounds = box.getBounds()
+        if (box.getRadius() !== lastRenderedRadius) {
+          lastRenderedRadius = box.getRadius()
+          limiter.preDraw(box.getRadius())
+        }
+        if (renderTop) {
+          limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
+        }
+        if (renderBottom) {
+          limiter.drawHorizontalLine(bounds.x0, bounds.y1, bounds.x1 - bounds.x0)
+        }
+        limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
+      }
+
+      console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
+}

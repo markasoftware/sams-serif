@@ -10,12 +10,13 @@ module.exports = class Config {
       widthOverRadius: 0.05,
       minBlackRadius: 17,
       textHeightFrac: 0.7,
-      minRadius: 2
+      minRadius: 2,
     }
     this.samsSerifConfig = {
       standardRatio: 0.7,
       IChildSize: 0.4,
-      TChildSize: 0.5
+      TChildSize: 0.5,
+      OChildCount: 10,
     }
 
     this.dat = new dat.GUI()
@@ -33,7 +34,8 @@ module.exports = class Config {
 
       datSs.add(this.samsSerifConfig, 'standardRatio', 0.01, 5),
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
-      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1)
+      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1),
+      datSs.add(this.samsSerifConfig, 'OChildCount', 1, 100, 1),
     ]
   }
 
