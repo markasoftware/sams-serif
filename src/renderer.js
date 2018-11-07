@@ -11,6 +11,8 @@ module.exports = class Renderer {
     this.origViewport = origViewport
     this.canvasCtx = canvasCtx
     Object.assign(this, optsArg)
+
+    this.charHeight = this.textHeightFrac * this.origViewport.getDimensions().y
   }
 
   render () {
@@ -20,6 +22,10 @@ module.exports = class Renderer {
     let curTop = this.origViewport.getBounds().y0
 
     this.text.split('').forEach(char => {
+      if (char === '\n') {
+        curLeft = this.origViewport.getBounds().x0
+        curTop += this.verticalSpacing * this.charHeight
+      }
       const charWidth = this._renderChar(char, curLeft, curTop)
 
       curLeft += charWidth * this.horizontalSpacing
@@ -34,13 +40,12 @@ module.exports = class Renderer {
 
   // @return width of character
   _renderChar (char, x0, y0) {
-    const fontChar = this.font[char]
+    const fontChar = this.font[char] || this.font[char.toUpperCase()]
     if (!fontChar) {
-      return
+      return 0
     }
-    const charHeight = this.textHeightFrac * this.origViewport.getDimensions().y
-    const charWidth = charHeight * fontChar.ratio
-    const charBox = new Box({ x0, y0, x1: x0 + charWidth, y1: y0 + charHeight })
+    const charWidth = this.charHeight * fontChar.ratio
+    const charBox = new Box({ x0, y0, x1: x0 + charWidth, y1: y0 + this.charHeight })
 
     const renderLimiter = new RenderLimiter(this.canvasCtx, this.canvasViewport, this.widthOverRadius, this.minRadius, this.minBlackRadius)
 

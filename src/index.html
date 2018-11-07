@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Sam's Serif -- An Interactive Font Experience</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       margin: 0;
@@ -10,74 +11,18 @@
       overflow: hidden;
       cursor: pointer;
     }
-    /* Dat.GUI Light theme, from https://github.com/liabru/dat-gui-light-theme */
-    .dg.main.taller-than-window .close-button {
-        border-top: 1px solid #ddd;
+    #mobile_input {
+      width: 100%;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      display: none;
     }
-
-    .dg.main .close-button {
-        background-color: #e8e8e8;
-    }
-
-    .dg.main .close-button:hover {
-        background-color: #ddd;
-    }
-
-    .dg {
-        color: #555;
-        text-shadow: none !important;
-    }
-
-    .dg.main::-webkit-scrollbar {
-        background: #fafafa;
-    }
-
-    .dg.main::-webkit-scrollbar-thumb {
-        background: #bbb;
-    }
-
-    .dg li:not(.folder) {
-        background: #fafafa;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .dg li.save-row .button {
-        text-shadow: none !important;
-    }
-
-    .dg li.title {
-        background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
-    }
-
-    .dg .cr.function:hover,.dg .cr.boolean:hover {
-        background: #fff;
-    }
-
-    .dg .c input[type=text] {
-        background: #e9e9e9;
-    }
-
-    .dg .c input[type=text]:hover {
-        background: #eee;
-    }
-
-    .dg .c input[type=text]:focus {
-        background: #eee;
-        color: #555;
-    }
-
-    .dg .c .slider {
-        background: #e9e9e9;
-    }
-
-    .dg .c .slider:hover {
-        background: #eee;
-    }
-    /* End Dat.GUI light theme */
   </style>
 </head>
 <body>
   <canvas id='sams_canvas'>Get a browser from this century.</canvas>
+  <input id='mobile_input'>
   <script src='bundle.js'></script>
 </body>
 </html>

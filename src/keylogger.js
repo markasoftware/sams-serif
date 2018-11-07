@@ -26,6 +26,7 @@ module.exports = class Keylogger {
   }
 
   _keyPressHandler (e) {
+    e.stopPropagation()
     if (e.key.length === 1) {
       this.text += e.key
     } else if (e.key === 'Enter') {
@@ -39,6 +40,10 @@ module.exports = class Keylogger {
 
   _addEventListeners () {
     assert(this.el)
-    this.el.addEventListener('keypress', this._keyPressHandler.bind(this))
+    this.el.addEventListener('keydown', this._keyPressHandler.bind(this), true)
+  }
+
+  static stopPropagation (el) {
+    el.addEventListener('keydown', e => e.stopPropagation())
   }
 }

@@ -11,6 +11,11 @@ const Box = require('../box')
  */
 
 const samsSerif = opts => ({
+  ' ': {
+    ratio: opts.spaceRatio,
+    render: () => null
+  },
+
   'I': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {

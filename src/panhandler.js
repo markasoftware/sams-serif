@@ -32,6 +32,9 @@ module.exports = class Panhandler extends Box {
     el.addEventListener('mousedown', e => {
       this._dragStart()
     })
+    el.addEventListener('mousedown', e => {
+      this._dragStart()
+    })
     el.addEventListener('mousemove', e => {
       this._mouseUpdate(e.clientX, e.clientY)
     })
