@@ -17,10 +17,11 @@ module.exports = class Config {
     this.samsSerifConfig = {
       standardRatio: 0.7,
       spaceRatio: 0.3,
+      ELegSize: 0.5,
       IChildSize: 0.4,
-      TChildSize: 0.5,
       OChildCount: 5,
-      OInner: true
+      OInner: true,
+      TChildSize: 0.5,
     }
 
     this.dat = new dat.GUI()
@@ -38,10 +39,11 @@ module.exports = class Config {
 
       datSs.add(this.samsSerifConfig, 'standardRatio', 0.01, 5),
       datSs.add(this.samsSerifConfig, 'spaceRatio', 0.01, 5),
+      datSs.add(this.samsSerifConfig, 'ELegSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
-      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1),
       datSs.add(this.samsSerifConfig, 'OChildCount', 2, 40, 1),
-      datSs.add(this.samsSerifConfig, 'OInner')
+      datSs.add(this.samsSerifConfig, 'OInner'),
+      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1),
     ]
 
     KeyLogger.stopPropagation(this.dat.domElement)

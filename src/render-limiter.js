@@ -21,10 +21,18 @@ module.exports = class RenderLimiter {
   /**
    * Check if an element with a certain radius should be rendered
    * @param {number} radius
-   * @returns {boolean}
+   * @returns {boolean} whether the radius is large enough to warrant rendering
    */
   shouldRenderRadius (radius) {
     return radius >= this.minRadius
+  }
+  
+  /**
+   * @param {number} radius
+   * @returns {number} the width of the line for that radius
+   */
+  getWidthByRadius (radius) {
+    return radius * this.widthOverRadius
   }
 
   /**
