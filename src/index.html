@@ -2,13 +2,14 @@
 <html>
 <head>
   <title>Sam's Serif -- An Interactive Font Experience</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     body {
       margin: 0;
       padding: 0;
       background-color: white;
       overflow: hidden;
+      position: relative;
       cursor: pointer;
     }
     #mobile_input {
@@ -22,7 +23,7 @@
 </head>
 <body>
   <canvas id='sams_canvas'>Get a browser from this century.</canvas>
-  <input id='mobile_input'>
+  <input id='mobile_input' placeholder='Tap here to open keyboard.'>
   <script src='bundle.js'></script>
 </body>
 </html>

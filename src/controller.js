@@ -43,12 +43,20 @@ module.exports = class Controller {
   }
 
   _linkCanvas () {
+    this.canvasCtx = this.canvasEl.getContext('2d')
+
+    // TODO: this dpiRatio stuff I got from some article online doesn't actually work -- it still looks fuzzy on mobile
+    const devicePixelRatio = window.devicePixelRatio || 1
+    const backingStoreRatio = this.canvasCtx.backingStorePixelRatio || 1
+    const dpiRatio = devicePixelRatio / backingStoreRatio
+    this.canvasCtx.scale(dpiRatio, dpiRatio)
+
     const canvasBounds = { x0: 0, y0: 0, x1: window.innerWidth, y1: window.innerHeight }
     this.canvasViewport = new Box(canvasBounds)
-
-    this.canvasCtx = this.canvasEl.getContext('2d')
-    this.canvasEl.width = canvasBounds.x1
-    this.canvasEl.height = canvasBounds.y1
+    this.canvasEl.width = window.innerWidth * dpiRatio
+    this.canvasEl.height = canvasBounds.y1 * dpiRatio
+    this.canvasEl.style.width = window.innerWidth
+    this.canvasEl.style.height = window.innerHeight
   }
 
   _raf () {

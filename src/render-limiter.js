@@ -26,7 +26,7 @@ module.exports = class RenderLimiter {
   shouldRenderRadius (radius) {
     return radius >= this.minRadius
   }
-  
+
   /**
    * @param {number} radius
    * @returns {number} the width of the line for that radius

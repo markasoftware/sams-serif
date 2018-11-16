@@ -32,6 +32,9 @@ module.exports = class Box {
   }
 
   scale (percent, center = this.getCenter()) {
+    assert(typeof percent === 'number')
+    assert(typeof center.x === 'number')
+    assert(typeof center.y === 'number')
     this.y0 = center.y - (center.y - this.y0) * percent
     this.y1 = center.y - (center.y - this.y1) * percent
     this.x0 = center.x - (center.x - this.x0) * percent
@@ -39,6 +42,8 @@ module.exports = class Box {
   }
 
   pan (x, y) {
+    assert(typeof x === 'number' && typeof y === 'number')
+    assert(!isNaN(x) && !isNaN(y))
     this.x0 += x
     this.x1 += x
     this.y0 += y

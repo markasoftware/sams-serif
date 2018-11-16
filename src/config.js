@@ -21,7 +21,7 @@ module.exports = class Config {
       IChildSize: 0.4,
       OChildCount: 5,
       OInner: true,
-      TChildSize: 0.5,
+      TChildSize: 0.5
     }
 
     this.dat = new dat.GUI()
@@ -43,7 +43,7 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
       datSs.add(this.samsSerifConfig, 'OChildCount', 2, 40, 1),
       datSs.add(this.samsSerifConfig, 'OInner'),
-      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1),
+      datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1)
     ]
 
     KeyLogger.stopPropagation(this.dat.domElement)

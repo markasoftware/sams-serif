@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('assert')
+const isMobile = require('is-mobile')
 
 module.exports = class Keylogger {
   constructor () {
@@ -26,13 +27,18 @@ module.exports = class Keylogger {
   }
 
   _keyPressHandler (e) {
-    e.stopPropagation()
-    if (e.key.length === 1) {
-      this.text += e.key
-    } else if (e.key === 'Enter') {
-      this.text += '\n'
-    } else if (e.key === 'Backspace') {
-      this.text = this.text.slice(0, -1)
+    if (typeof InputEvent !== 'undefined' && e instanceof InputEvent) {
+      if (e.data.length > 0) {
+        this.text += e.data[0]
+      }
+    } else {
+      if (e.key.length === 1) {
+        this.text += e.key
+      } else if (e.key === 'Enter') {
+        this.text += '\n'
+      } else if (e.key === 'Backspace') {
+        this.text = this.text.slice(0, -1)
+      }
     }
 
     this._textUpdated()
@@ -40,10 +46,15 @@ module.exports = class Keylogger {
 
   _addEventListeners () {
     assert(this.el)
-    this.el.addEventListener('keydown', this._keyPressHandler.bind(this), true)
+    if (isMobile({ tablet: true })) {
+      this.el.addEventListener('beforeinput', this._keyPressHandler.bind(this))
+    } else {
+      this.el.addEventListener('keydown', this._keyPressHandler.bind(this))
+    }
   }
 
   static stopPropagation (el) {
     el.addEventListener('keydown', e => e.stopPropagation())
+    el.addEventListener('beforeinput', e => e.stopPropagation())
   }
 }

@@ -16,51 +16,51 @@ const samsSerif = opts => ({
     ratio: opts.spaceRatio,
     render: () => null
   },
-  
+
   'E': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
       const initLength = origBox.getDimensions().x
       const xLeft = origBox.getBounds().x0
       const verticalLineWidth = limiter.getWidthByRadius(origBox.getDimensions().y / 2)
-      
+
       // vertical line
       limiter.preDraw(origBox.getDimensions().y / 2)
       limiter.drawVerticalLine(xLeft, origBox.getBounds().y0, origBox.getDimensions().y)
-      
+
       // mini lines
       const legs = []
       findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength)
       legs
         .sort((a, b) => a.length - b.length)
         .forEach(drawELeg)
-        
+
       // big top and bottom lines. Yeah Linus, it's not "good taste"
-      drawELeg({y: origBox.getBounds().y0, length: initLength })
+      drawELeg({ y: origBox.getBounds().y0, length: initLength })
       drawELeg({ y: origBox.getBounds().y1, length: initLength })
-      
+
       /**
        * @param {number} the y position of the center thing
        * @param {number} yRadius how far from the y center the next, smaller legs should be
        * @param {number} the length of the leg at the center
        */
-      function findELegs(yCenter, yRadius, length) {
+      function findELegs (yCenter, yRadius, length) {
         if (limiter.shouldRender(new Box({
           x0: xLeft,
           x1: xLeft + length,
           y0: yCenter - yRadius * 2,
-          y1: yCenter + yRadius * 2,
+          y1: yCenter + yRadius * 2
         }))) {
           legs.push({ y: yCenter, length })
           console.log(length)
-          if (limiter.shouldRenderRadius( length * opts.ELegSize / 2 )) {
+          if (limiter.shouldRenderRadius(length * opts.ELegSize / 2)) {
             findELegs(yCenter - yRadius, yRadius / 2, length * opts.ELegSize)
             findELegs(yCenter + yRadius, yRadius / 2, length * opts.ELegSize)
           }
         }
       }
-      
-      function drawELeg(queueItem) {
+
+      function drawELeg (queueItem) {
         // we don't do the caching shit because who cares, there won't be too many segments
         // TODO: move the preDraw memoization into the limiter itself
         limiter.preDraw(queueItem.length / 2)
@@ -203,7 +203,7 @@ const samsSerif = opts => ({
     render: (ctx, origBox, limiter) => {
       renderILike(ctx, origBox, limiter, true, false, opts.TChildSize, opts.standardRatio)
     }
-  },
+  }
 
 })
 module.exports = samsSerif
