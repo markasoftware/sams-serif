@@ -21,50 +21,57 @@ const samsSerif = opts => ({
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
       const initLength = origBox.getDimensions().x
-      const xLeft = origBox.getBounds().x0
       const verticalLineWidth = limiter.getWidthByRadius(origBox.getDimensions().y / 2)
+      const xLeft = Math.floor(origBox.getBounds().x0 + verticalLineWidth / 2)
+
+      threePartRender({
+        find,
+        toRadius,
+        draw,
+        limiter,
+      })
 
       // vertical line
       limiter.preDraw(origBox.getDimensions().y / 2)
-      limiter.drawVerticalLine(xLeft, origBox.getBounds().y0, origBox.getDimensions().y)
-
-      // mini lines
-      const legs = []
-      findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength)
-      legs
-        .sort((a, b) => a.length - b.length)
-        .forEach(drawELeg)
+      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y)
 
       // big top and bottom lines. Yeah Linus, it's not "good taste"
-      drawELeg({ y: origBox.getBounds().y0, length: initLength })
-      drawELeg({ y: origBox.getBounds().y1, length: initLength })
+      draw({ y: origBox.getBounds().y0, length: initLength })
+      draw({ y: origBox.getBounds().y1, length: initLength })
+
+      function find(pushToMe) {
+        findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength, pushToMe)
+      }
 
       /**
        * @param {number} the y position of the center thing
        * @param {number} yRadius how far from the y center the next, smaller legs should be
        * @param {number} the length of the leg at the center
        */
-      function findELegs (yCenter, yRadius, length) {
+      function findELegs (yCenter, yRadius, length, pushToMe) {
         if (limiter.shouldRender(new Box({
           x0: xLeft,
           x1: xLeft + length,
           y0: yCenter - yRadius * 2,
           y1: yCenter + yRadius * 2
         }))) {
-          legs.push({ y: yCenter, length })
-          console.log(length)
+          pushToMe.push({ y: yCenter, length })
           if (limiter.shouldRenderRadius(length * opts.ELegSize / 2)) {
-            findELegs(yCenter - yRadius, yRadius / 2, length * opts.ELegSize)
-            findELegs(yCenter + yRadius, yRadius / 2, length * opts.ELegSize)
+            findELegs(yCenter - yRadius, yRadius / 2, length * opts.ELegSize, pushToMe)
+            findELegs(yCenter + yRadius, yRadius / 2, length * opts.ELegSize, pushToMe)
           }
         }
       }
 
-      function drawELeg (queueItem) {
+      function toRadius(c) {
+        return c.length / 2
+      }
+
+      function draw (queueItem) {
         // we don't do the caching shit because who cares, there won't be too many segments
         // TODO: move the preDraw memoization into the limiter itself
         limiter.preDraw(queueItem.length / 2)
-        limiter.drawHorizontalLine(xLeft + verticalLineWidth / 2, queueItem.y, queueItem.length)
+        limiter.drawHorizontalLine(xLeft, queueItem.y, queueItem.length)
       }
     }
   },
@@ -278,4 +285,39 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
   }
 
   console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
+}
+
+/**
+ * Renders a letter using the general pattern
+ *
+ * All parameters are in the first argument object
+ * @param find a function which takes (pushToMe) and appends all children, in whichever format the function prefers, to pushToMe
+ * @param toRadius a function which takes a child item, in whichever format findChildren and renderChild use, and returns a radius for use in predraw
+ * @param draw takes (child) and then renders it. Does not need to predraw. `render` property, in addition to whatever properties `find` created, will be present.
+ * @param limiter the limiter
+ * @return null
+ */
+function threePartRender({ find, toRadius, draw, limiter }) {
+  const children = []
+  find(children)
+  console.log(`Rendering ${children.length} children`)
+  let lastRadius = NaN
+  for(const child of children) {
+    child.radius = toRadius(child)
+  }
+  children
+    .sort((a, b) => a.radius - b.radius)
+    // foreach used to be a lot slower than a for loop but that is no longer the case
+    .forEach(c => {
+      // ideally we would zip arr $ tail arr then map to determine if different than last
+      // but I'm not using ramda or lodash this time around and that's ok.
+      // not to mention performance would be abominable
+      const approxRadius = Math.floor(toRadius(c))
+      if (approxRadius != lastRadius) {
+        lastRadius = approxRadius
+        limiter.preDraw(approxRadius)
+      }
+
+      draw(c)
+    })
 }

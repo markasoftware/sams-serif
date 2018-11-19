@@ -47,6 +47,7 @@ module.exports = class Config {
     ]
 
     KeyLogger.stopPropagation(this.dat.domElement)
+
     // phone only
     if (isMobile()) {
       this.dat.closed = true
