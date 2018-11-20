@@ -28,7 +28,7 @@ const samsSerif = opts => ({
         find,
         toRadius,
         draw,
-        limiter,
+        limiter
       })
 
       // vertical line
@@ -39,7 +39,7 @@ const samsSerif = opts => ({
       draw({ y: origBox.getBounds().y0, length: initLength })
       draw({ y: origBox.getBounds().y1, length: initLength })
 
-      function find(pushToMe) {
+      function find (pushToMe) {
         findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength, pushToMe)
       }
 
@@ -63,7 +63,7 @@ const samsSerif = opts => ({
         }
       }
 
-      function toRadius(c) {
+      function toRadius (c) {
         return c.length / 2
       }
 
@@ -297,12 +297,12 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
  * @param limiter the limiter
  * @return null
  */
-function threePartRender({ find, toRadius, draw, limiter }) {
+function threePartRender ({ find, toRadius, draw, limiter }) {
   const children = []
   find(children)
   console.log(`Rendering ${children.length} children`)
   let lastRadius = NaN
-  for(const child of children) {
+  for (const child of children) {
     child.radius = toRadius(child)
   }
   children
@@ -313,7 +313,7 @@ function threePartRender({ find, toRadius, draw, limiter }) {
       // but I'm not using ramda or lodash this time around and that's ok.
       // not to mention performance would be abominable
       const approxRadius = Math.floor(toRadius(c))
-      if (approxRadius != lastRadius) {
+      if (approxRadius !== lastRadius) {
         lastRadius = approxRadius
         limiter.preDraw(approxRadius)
       }

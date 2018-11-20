@@ -1,3 +1,10 @@
+/**
+ * The original purpose of the render limiter was to provide a way for the font to know what to and what not to render.
+ * This is essential because otherwise the fonts do not know when to stop recursing. However, it has grown substantially
+ * and now contains a number of drawing-related functions which aren't "limiting" whatsoever. The render limiter is now
+ * essentially an anything-goes set of drawing and canvas related functionality.
+ */
+
 'use strict'
 
 const Box = require('./box')
@@ -89,5 +96,29 @@ module.exports = class RenderLimiter {
     const widthRadius = Math.round(this.lineWidth / 2)
 
     this.canvasCtx.fillRect(x, y - widthRadius, length, this.lineWidth)
+  }
+
+  /**
+   * Draw an arc in the current path based on its points rather than angles
+   * Converts stuff to polar then does shit
+   *
+   * @param {Point} the center of the arc
+   * @param {Point} the start of the arc
+   * @param {Point} the end of the arc
+   */
+  drawArcByPoints (center, start, end) {
+    const centerCartesian = center.asCartesian()
+    const startCartesian = start.asCartesian()
+    const startPolar = start.asPolar()
+    const endPolar = end.asPolar()
+
+    this.canvasCtx.moveTo(startCartesian.x, startCartesian.y)
+    this.canvasCtx.arc(
+      centerCartesian.x,
+      centerCartesian.y,
+      startPolar.radius,
+      startPolar.angle,
+      endPolar.angle
+    )
   }
 }
