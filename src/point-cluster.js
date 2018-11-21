@@ -10,7 +10,7 @@ module.exports = class PointCluster {
     this.points = points
   }
 
-  getPoints() {
+  getPoints () {
     return this.points
   }
 

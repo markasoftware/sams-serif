@@ -3,18 +3,73 @@
 const assert = require('assert')
 const Box = require('../box')
 
-/*
- * The general procedure for a lot of these is three steps:
- * 1. Generate an array of all items to render
- * 2. Sort the array by radius to minimize the number of predraws
- * 3. Render each item in the array, predrawing if the radius is different than the last one
- * TODO: split out this general logic into a library of its own
- */
-
 const samsSerif = opts => ({
   ' ': {
     ratio: opts.spaceRatio,
     render: () => null
+  },
+
+  'B': {
+    // TODO: probably use a separate ratio because it can't be below 0.5 for B
+    ratio: opts.standardRatio,
+    render: (ctx, origBox, limiter) => {
+      const ratio = opts.standardRatio
+      assert(ratio >= 0.5)
+
+      const wholeRadius = origBox.getRadius()
+      const xLeft = Math.floor(origBox.getBounds().x0 + limiter.getWidthByRadius(wholeRadius) / 2)
+      // what fraction of each character's height is the width that should be used for straight lines
+      const straightLineRatio = ratio - 0.5
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      limiter.preDraw(wholeRadius)
+      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y)
+      // the children do not draw their bottom lines
+      limiter.drawHorizontalLine(xLeft, origBox.getBounds().y1, origBox.getDimensions().y * straightLineRatio)
+
+      function find (pushToMe) {
+        findChildren({
+          height: origBox.getDimensions().y,
+          yTop: origBox.getBounds().y0
+        }, pushToMe)
+      }
+
+      function findChildren (parent, pushToMe) {
+        if (!limiter.shouldRender(new Box({
+          x0: xLeft,
+          x1: xLeft + parent.height * ratio,
+          y0: parent.yTop,
+          y1: parent.yTop + parent.height
+        }))) {
+          return
+        }
+        pushToMe.push(parent)
+        // because there are only two we don't need to bother checking radius in the parent recursor
+        findChildren({
+          height: parent.height / 2,
+          yTop: parent.yTop
+        }, pushToMe)
+        findChildren({
+          height: parent.height / 2,
+          yTop: parent.yTop + parent.height / 2
+        }, pushToMe)
+      }
+
+      function toRadius (c) {
+        return Math.sqrt(c.height ** 2 + (c.height * ratio) ** 2) / 2
+      }
+
+      function draw (c) {
+        const straightWidth = c.height * straightLineRatio
+        limiter.drawHorizontalLine(xLeft, c.yTop, straightWidth)
+        limiter.drawHorizontalLine(xLeft, c.yTop + c.height / 2, straightWidth)
+        ctx.moveTo(xLeft + straightWidth, c.yTop)
+        ctx.arc(xLeft + straightWidth, c.yTop + c.height / 4, c.height / 4, -Math.PI / 2, Math.PI / 2)
+        ctx.moveTo(xLeft + straightWidth, c.yTop + c.height / 2)
+        ctx.arc(xLeft + straightWidth, c.yTop + c.height * 3 / 4, c.height / 4, -Math.PI / 2, Math.PI / 2)
+      }
+    }
   },
 
   'E': {
@@ -24,12 +79,7 @@ const samsSerif = opts => ({
       const verticalLineWidth = limiter.getWidthByRadius(origBox.getDimensions().y / 2)
       const xLeft = Math.floor(origBox.getBounds().x0 + verticalLineWidth / 2)
 
-      threePartRender({
-        find,
-        toRadius,
-        draw,
-        limiter
-      })
+      limiter.threePartRender(find, toRadius, draw)
 
       // vertical line
       limiter.preDraw(origBox.getDimensions().y / 2)
@@ -285,39 +335,4 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
   }
 
   console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
-}
-
-/**
- * Renders a letter using the general pattern
- *
- * All parameters are in the first argument object
- * @param find a function which takes (pushToMe) and appends all children, in whichever format the function prefers, to pushToMe
- * @param toRadius a function which takes a child item, in whichever format findChildren and renderChild use, and returns a radius for use in predraw
- * @param draw takes (child) and then renders it. Does not need to predraw. `render` property, in addition to whatever properties `find` created, will be present.
- * @param limiter the limiter
- * @return null
- */
-function threePartRender ({ find, toRadius, draw, limiter }) {
-  const children = []
-  find(children)
-  console.log(`Rendering ${children.length} children`)
-  let lastRadius = NaN
-  for (const child of children) {
-    child.radius = toRadius(child)
-  }
-  children
-    .sort((a, b) => a.radius - b.radius)
-    // foreach used to be a lot slower than a for loop but that is no longer the case
-    .forEach(c => {
-      // ideally we would zip arr $ tail arr then map to determine if different than last
-      // but I'm not using ramda or lodash this time around and that's ok.
-      // not to mention performance would be abominable
-      const approxRadius = Math.floor(toRadius(c))
-      if (approxRadius !== lastRadius) {
-        lastRadius = approxRadius
-        limiter.preDraw(approxRadius)
-      }
-
-      draw(c)
-    })
 }

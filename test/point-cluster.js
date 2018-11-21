@@ -12,10 +12,10 @@ test('POINTCLUSTER: Get and set', t => {
     new Point({ x: 0, y: 5 })
   ])
   t.deepEqual(square.getPoints().map(c => c.asCartesian()), [
-  {x: 0, y: 0},
-  { x: 5, y: 0},
-  { x: 5, y: 5 },
-  { x: 0, y: 5}
+    { x: 0, y: 0 },
+    { x: 5, y: 0 },
+    { x: 5, y: 5 },
+    { x: 0, y: 5 }
   ])
 
   t.end()

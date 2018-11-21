@@ -121,4 +121,46 @@ module.exports = class RenderLimiter {
       endPolar.angle
     )
   }
+
+  /**
+  * The general procedure for a lot of these is three steps:
+  * 1. Generate an array of all items to render
+  * 2. Sort the array by radius to minimize the number of predraws
+  * 3. Render each item in the array, predrawing if the radius is different than the last one
+  *
+  * All parameters are in the first argument object
+  * @param find a function which takes (pushToMe) and appends all children, in whichever format the function prefers, to pushToMe
+  * @param toRadius a function which takes a child item, in whichever format findChildren and renderChild use, and returns a radius for use in predraw
+  * @param draw takes (child) and then renders it. Does not need to predraw. `render` property, in addition to whatever properties `find` created, will be present.
+  * @return null
+  */
+  threePartRender (find, toRadius, draw) {
+    const children = []
+    find(children)
+    console.log(`Rendering ${children.length} children`)
+    let lastRadius = NaN
+    for (const child of children) {
+      child.radius = toRadius(child)
+    }
+
+    this.canvasCtx.beginPath()
+    children
+      .sort((a, b) => a.radius - b.radius)
+      // foreach used to be a lot slower than a for loop but that is no longer the case
+      .forEach(c => {
+        // ideally we would zip arr $ tail arr then map to determine if different than last
+        // but I'm not using ramda or lodash this time around and that's ok.
+        // not to mention performance would be abominable
+        const approxRadius = Math.floor(toRadius(c))
+        if (approxRadius !== lastRadius) {
+          lastRadius = approxRadius
+          this.canvasCtx.stroke()
+          this.canvasCtx.beginPath()
+          this.preDraw(approxRadius)
+        }
+
+        draw(c)
+      })
+    this.canvasCtx.stroke()
+  }
 }

@@ -53,10 +53,10 @@ test('POINT: Rotate', t => {
 test('POINT: Scale', t => {
   const pt34 = new Point({ x: 3, y: 4 })
   pt34.transform({ type: 'scale', center: { x: -1, y: 0 }, scale: 0.5 })
-  t.deepEqual(pt34.asCartesian(), { x: 1, y: 2})
+  t.deepEqual(pt34.asCartesian(), { x: 1, y: 2 })
 
-  const pt55 = new Point({x: -5, y: -5})
-  pt55.transform({ type: 'scale', center: { x: -10, y: -10 }, scale: 2})
+  const pt55 = new Point({ x: -5, y: -5 })
+  pt55.transform({ type: 'scale', center: { x: -10, y: -10 }, scale: 2 })
   t.deepEqual(pt55.asCartesian(), { x: 0, y: 0 })
 
   t.end()
