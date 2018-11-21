@@ -4,6 +4,23 @@ const test = require('tape')
 const Point = require('../src/point')
 const PointCluster = require('../src/point-cluster')
 
+test('POINTCLUSTER: Get and set', t => {
+  const square = new PointCluster([
+    new Point({ x: 0, y: 0 }),
+    new Point({ x: 5, y: 0 }),
+    new Point({ x: 5, y: 5 }),
+    new Point({ x: 0, y: 5 })
+  ])
+  t.deepEqual(square.getPoints().map(c => c.asCartesian()), [
+  {x: 0, y: 0},
+  { x: 5, y: 0},
+  { x: 5, y: 5 },
+  { x: 0, y: 5}
+  ])
+
+  t.end()
+})
+
 test('POINTCLUSTER: Bounding Box', t => {
   const square = new PointCluster([
     new Point({ x: 0, y: 0 }),

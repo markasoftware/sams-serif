@@ -10,6 +10,10 @@ module.exports = class PointCluster {
     this.points = points
   }
 
+  getPoints() {
+    return this.points
+  }
+
   getBounds () {
     const toReturn = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity }
 
@@ -29,15 +33,8 @@ module.exports = class PointCluster {
   }
 
   transform (transform) {
-    switch (transform.type) {
-      case 'translate':
-      case 'rotate':
-        for (const point of this.points) {
-          point.transform(transform)
-        }
-        break
-      default:
-        assert(false, 'Invalid transform type in cluster')
+    for (const point of this.points) {
+      point.transform(transform)
     }
   }
 }

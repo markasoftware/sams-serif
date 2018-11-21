@@ -49,6 +49,10 @@ module.exports = class Point {
         const rotatedPoint = new Point({ center: transform.center, radius: polar.radius, angle: polar.angle })
         this._clone(rotatedPoint)
         break
+      case 'scale':
+        this.x = transform.center.x + (this.x - transform.center.x) * transform.scale
+        this.y = transform.center.y + (this.y - transform.center.y) * transform.scale
+        break
       default:
         assert(false, 'Invalid transform type in point')
     }
