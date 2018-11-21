@@ -10,15 +10,15 @@ module.exports = class Config {
       horizontalSpacing: 2,
       verticalSpacing: 2,
       widthOverRadius: 0.05,
-      minBlackRadius: 17,
+      minBlackRadius: 10,
       textHeightFrac: 0.5,
       minRadius: 2
     }
     this.samsSerifConfig = {
       standardRatio: 0.7,
-      spaceRatio: 0.3,
+      spaceRatio: 1,
       ELegSize: 0.5,
-      IChildSize: 0.4,
+      IChildSize: 0.45,
       OChildCount: 5,
       OInner: true,
       TChildSize: 0.5

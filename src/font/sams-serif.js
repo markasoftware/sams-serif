@@ -26,7 +26,7 @@ const samsSerif = opts => ({
       limiter.preDraw(wholeRadius)
       limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y)
       // the children do not draw their bottom lines
-      limiter.drawHorizontalLine(xLeft, origBox.getBounds().y1, origBox.getDimensions().y * straightLineRatio)
+      limiter.drawHorizontalLine(xLeft, origBox.getBounds().y1, Math.ceil(origBox.getDimensions().y * straightLineRatio))
 
       function find (pushToMe) {
         findChildren({
@@ -36,6 +36,7 @@ const samsSerif = opts => ({
       }
 
       function findChildren (parent, pushToMe) {
+        // TODO: Why does the outer B disappear when you drag it to the bottom (halfway through the line or so, only width visible) but the inner ones do not?
         if (!limiter.shouldRender(new Box({
           x0: xLeft,
           x1: xLeft + parent.height * ratio,
@@ -61,7 +62,7 @@ const samsSerif = opts => ({
       }
 
       function draw (c) {
-        const straightWidth = c.height * straightLineRatio
+        const straightWidth = Math.ceil(c.height * straightLineRatio)
         limiter.drawHorizontalLine(xLeft, c.yTop, straightWidth)
         limiter.drawHorizontalLine(xLeft, c.yTop + c.height / 2, straightWidth)
         ctx.moveTo(xLeft + straightWidth, c.yTop)
@@ -118,9 +119,6 @@ const samsSerif = opts => ({
       }
 
       function draw (queueItem) {
-        // we don't do the caching shit because who cares, there won't be too many segments
-        // TODO: move the preDraw memoization into the limiter itself
-        limiter.preDraw(queueItem.length / 2)
         limiter.drawHorizontalLine(xLeft, queueItem.y, queueItem.length)
       }
     }
@@ -205,22 +203,17 @@ const samsSerif = opts => ({
       }
       const center = origBox.getCenter()
 
-      let lastRadius
-      // queue items: {x, y, radius}
-      const queue = []
-      // the center distance from the edge is the radius
-      findChildrenByCenter(center.x, center.y, origBox.getDimensions().x / 2)
-      ctx.beginPath()
-      queue
-        .sort((a, b) => a.radius - b.radius)
-        .forEach(renderO)
-      ctx.stroke()
+      limiter.threePartRender(find, toRadius, draw)
 
-      function findChildrenByCenter (x, y, radius) {
+      function find (pushToMe) {
+        findChildrenByCenter(center.x, center.y, origBox.getDimensions().x / 2, pushToMe)
+      }
+
+      function findChildrenByCenter (x, y, radius, pushToMe) {
         if (!limiter.shouldRender(new Box({ x0: x - radius, x1: x + radius, y0: y - radius, y1: y + radius }))) {
           return
         }
-        queue.push({ x, y, radius })
+        pushToMe.push({ x, y, radius })
 
         const childRadius = radius * childWidthMultiplier
         const innerRadius = radius * innerWidthMultiplier
@@ -231,24 +224,22 @@ const samsSerif = opts => ({
             findChildrenByCenter(
               Math.cos(theta) * toChildRadius + x,
               Math.sin(theta) * toChildRadius + y,
-              childRadius
+              childRadius,
+              pushToMe
             )
           }
         }
 
         if (limiter.shouldRenderRadius(innerRadius) && opts.OInner) {
-          findChildrenByCenter(x, y, innerRadius)
+          findChildrenByCenter(x, y, innerRadius, pushToMe)
         }
       }
 
-      function renderO (queueItem) {
-        if (queueItem.radius !== lastRadius) {
-          ctx.stroke()
-          ctx.beginPath()
-          limiter.preDraw(queueItem.radius)
-          lastRadius = queueItem.radius
-        }
+      function toRadius (c) {
+        return c.radius
+      }
 
+      function draw (queueItem) {
         ctx.moveTo(queueItem.x + queueItem.radius, queueItem.y)
         ctx.arc(queueItem.x, queueItem.y, queueItem.radius, 0, Math.PI * 2)
       }
@@ -266,8 +257,6 @@ const samsSerif = opts => ({
 module.exports = samsSerif
 
 function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize, ratio) {
-  let findChildrenCount = 0
-  let renderCount = 0
   // BEGIN CONFIGURATION
   const childWidthMultiplier = childSize
   // END CONFIGURATION
@@ -278,17 +267,13 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
   const dim = origBox.getDimensions()
   const bounds = origBox.getBounds()
 
-  // so nothing is equal to it, hehehe
-  let lastRenderedRadius = NaN
+  limiter.threePartRender(find, toRadius, draw)
 
-  const allIs = []
-  findChildrenByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2)
-  allIs
-    .sort((a, b) => a.getRadius() - b.getRadius())
-    .forEach(qItem => renderI(qItem))
+  function find (pushToMe) {
+    findChildrenByCenter(bounds.x1 - dim.x / 2, bounds.y1 - dim.y / 2, dim.y / 2, pushToMe)
+  }
 
-  function findChildrenByCenter (x, y, verticalRadius) {
-    findChildrenCount++
+  function findChildrenByCenter (x, y, verticalRadius, pushToMe) {
     const horizontalRadius = verticalRadius * ratio
     const bounds = {
       x0: x - horizontalRadius,
@@ -305,26 +290,25 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
     }
     // draw children first so light colored stuff doesn't overdraw our rects
     const childVR = verticalRadius * childWidthMultiplier
-    allIs.push(box)
+    pushToMe.push(box)
     if (limiter.shouldRenderRadius(box.getRadius() * childWidthMultiplier)) {
       if (renderTop) {
-        findChildrenByCenter(bounds.x0, bounds.y0, childVR)
-        findChildrenByCenter(bounds.x1, bounds.y0, childVR)
+        findChildrenByCenter(bounds.x0, bounds.y0, childVR, pushToMe)
+        findChildrenByCenter(bounds.x1, bounds.y0, childVR, pushToMe)
       }
       if (renderBottom) {
-        findChildrenByCenter(bounds.x1, bounds.y1, childVR)
-        findChildrenByCenter(bounds.x0, bounds.y1, childVR)
+        findChildrenByCenter(bounds.x1, bounds.y1, childVR, pushToMe)
+        findChildrenByCenter(bounds.x0, bounds.y1, childVR, pushToMe)
       }
     }
   }
 
-  function renderI (box) {
-    renderCount++
+  function toRadius (box) {
+    return box.getRadius()
+  }
+
+  function draw (box) {
     const bounds = box.getBounds()
-    if (box.getRadius() !== lastRenderedRadius) {
-      lastRenderedRadius = box.getRadius()
-      limiter.preDraw(box.getRadius())
-    }
     if (renderTop) {
       limiter.drawHorizontalLine(bounds.x0, bounds.y0, bounds.x1 - bounds.x0)
     }
@@ -333,6 +317,4 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
     }
     limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
   }
-
-  console.log(`Found children ${findChildrenCount} times, rendered ${renderCount} times.`)
 }
