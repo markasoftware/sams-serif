@@ -2,12 +2,17 @@
 
 const assert = require('assert')
 const Box = require('./box')
+const Point = require('./point')
 
 module.exports = class PointCluster {
   constructor (points) {
-    assert(points instanceof Array, 'points arg is an array')
-    assert(points.length > 0, 'must be at least one point')
-    this.points = points
+    if (points instanceof PointCluster) {
+      this.points = points.getPoints().map(c => new Point(c))
+    } else {
+      assert(points instanceof Array, 'points arg is an array')
+      assert(points.length > 0, 'must be at least one point')
+      this.points = points
+    }
   }
 
   getPoints () {

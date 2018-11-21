@@ -2,6 +2,10 @@
 
 const assert = require('assert')
 const Box = require('../box')
+const PointCluster = require('../point-cluster')
+const Point = require('../point')
+
+const deg = Math.PI / 180
 
 const samsSerif = opts => ({
   ' ': {
@@ -131,12 +135,94 @@ const samsSerif = opts => ({
     }
   },
 
+  'K': {
+    ratio: opts.standardRatio,
+    render: (ctx, origBox, limiter) => {
+      const childAngle = opts.KChildAngleDeg * deg
+      const childSize = opts.KChildSize
+      const childPositionYRatio = (1 - opts.KChildPosition) / 2
+      const childPositionXRatio = opts.KChildPosition
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      // Point cluster for K is simply the bounding box. Derp.
+      // starts at topLeft, then clockwise
+      function find (pushToMe) {
+        const origBounds = origBox.getBounds()
+        const pc = new PointCluster([
+          new Point({ x: origBounds.x0, y: origBounds.y0 }),
+          new Point({ x: origBounds.x1, y: origBounds.y0 }),
+          new Point({ x: origBounds.x1, y: origBounds.y1 }),
+          new Point({ x: origBounds.x0, y: origBounds.y1 })
+        ])
+        findChildren(pc, 0, pushToMe)
+      }
+
+      // less optimization here than in most other letter so far because
+      // recursion is linear in complexity (like the L)
+      function findChildren (pc, angle, pushToMe) {
+        pushToMe.push(pc)
+
+        const [pTopLeft, pTopRight, pBottomRight, pBottomLeft] = pc.getPoints()
+        const childBottomLeft = new Point(pBottomLeft)
+        childBottomLeft.transform({
+          type: 'translate',
+          x: pBottomRight.distanceTo(pBottomLeft) * childPositionXRatio,
+          // negative because it should be above previous
+          y: -pTopLeft.distanceTo(pBottomLeft) * childPositionYRatio,
+          angle
+        })
+        const childPc = new PointCluster(pc)
+        childPc.transform({
+          type: 'translate',
+          x: childBottomLeft.asCartesian().x - pBottomLeft.asCartesian().x,
+          y: childBottomLeft.asCartesian().y - pBottomLeft.asCartesian().y
+        })
+        childPc.transform({
+          type: 'rotate',
+          center: childBottomLeft.asCartesian(),
+          angle: childAngle
+        })
+        childPc.transform({
+          type: 'scale',
+          scale: childSize,
+          center: childBottomLeft.asCartesian()
+        })
+
+        // we cannot accurately determine the area that a K, with children,
+        // will take up, so we only stop renders based on radius
+        if (limiter.shouldRenderRadius(toRadius(childPc))) {
+          findChildren(childPc, angle + childAngle, pushToMe)
+        }
+      }
+
+      function toRadius (pc) {
+        const [topLeft, , bottomRight ] = pc.getPoints()
+        return topLeft.distanceTo(bottomRight) / 2
+      }
+
+      function draw (pc) {
+        const [topLeft, topRight, bottomRight, bottomLeft] = pc.getPoints().map(c => c.asCartesian())
+        const centerLeft = pc.getPoints()[0].midpointTo(pc.getPoints()[3]).asCartesian()
+        ctx.moveTo(topLeft.x, topLeft.y)
+        ctx.lineTo(bottomLeft.x, bottomLeft.y)
+        // to center left
+        ctx.moveTo(centerLeft.x, centerLeft.y)
+        // lower leg
+        ctx.lineTo(bottomRight.x, bottomRight.y)
+        // center left again
+        ctx.moveTo(centerLeft.x, centerLeft.y)
+        // upper leg
+        ctx.lineTo(topRight.x, topRight.y)
+      }
+    }
+  },
+
   'L': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
       const bounds = origBox.getBounds()
       const dim = origBox.getDimensions()
-      const ratio = opts.standardRatio
 
       // vertical lines
       let curTop = bounds.y0
@@ -168,7 +254,7 @@ const samsSerif = opts => ({
             break
         }
 
-        curLength *= ratio
+        curLength *= opts.LChildSize
       }
 
       function renderSegment (bounds, isVertical, lineLeft, lineTop) {
