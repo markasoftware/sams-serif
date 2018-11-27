@@ -138,6 +138,7 @@ const samsSerif = opts => ({
   'K': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
+      const childUseTop = opts.KByTop
       const childAngle = opts.KChildAngleDeg * deg
       const childSize = opts.KChildSize
       const childPositionYRatio = (1 - opts.KChildPosition) / 2
@@ -164,8 +165,9 @@ const samsSerif = opts => ({
         pushToMe.push(pc)
 
         const [pTopLeft, pTopRight, pBottomRight, pBottomLeft] = pc.getPoints()
-        const childBottomLeft = new Point(pBottomLeft)
-        childBottomLeft.transform({
+        const childCorner = new Point(pBottomLeft)
+        const parentCorner = childUseTop ? pTopLeft : pBottomLeft
+        childCorner.transform({
           type: 'translate',
           x: pBottomRight.distanceTo(pBottomLeft) * childPositionXRatio,
           // negative because it should be above previous
@@ -175,18 +177,18 @@ const samsSerif = opts => ({
         const childPc = new PointCluster(pc)
         childPc.transform({
           type: 'translate',
-          x: childBottomLeft.asCartesian().x - pBottomLeft.asCartesian().x,
-          y: childBottomLeft.asCartesian().y - pBottomLeft.asCartesian().y
+          x: childCorner.asCartesian().x - parentCorner.asCartesian().x,
+          y: childCorner.asCartesian().y - parentCorner.asCartesian().y
         })
         childPc.transform({
           type: 'rotate',
-          center: childBottomLeft.asCartesian(),
+          center: childCorner.asCartesian(),
           angle: childAngle
         })
         childPc.transform({
           type: 'scale',
           scale: childSize,
-          center: childBottomLeft.asCartesian()
+          center: childCorner.asCartesian()
         })
 
         // we cannot accurately determine the area that a K, with children,
