@@ -10,6 +10,7 @@
     "dat.gui": "^0.7.3",
     "interact.js": "^1.2.8",
     "is-mobile": "^2.0.0",
+    "just-map-values": "^1.1.0",
     "standard": "^12.0.1",
     "stats.js": "^0.17.0",
     "tap-summary": "^4.0.0",

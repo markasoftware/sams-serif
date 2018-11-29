@@ -1,6 +1,8 @@
 'use strict'
 
 const assert = require('assert')
+const mapValues = require('just-map-values')
+
 const Box = require('../box')
 const PointCluster = require('../point-cluster')
 const Point = require('../point')
@@ -138,11 +140,12 @@ const samsSerif = opts => ({
   'K': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
+      const ratio = opts.standardRatio
       const childUseTop = opts.KByTop
       const childAngle = opts.KChildAngleDeg * deg
       const childSize = opts.KChildSize
-      const childPositionYRatio = (1 - opts.KChildPosition) / 2
-      const childPositionXRatio = opts.KChildPosition
+      const childPositionYRatio = -(1 - opts.KChildPosition) / 2
+      const childPositionXRatio = opts.KChildPosition * ratio
 
       limiter.threePartRender(find, toRadius, draw)
 
@@ -150,12 +153,12 @@ const samsSerif = opts => ({
       // starts at topLeft, then clockwise
       function find (pushToMe) {
         const origBounds = origBox.getBounds()
-        const pc = new PointCluster([
-          new Point({ x: origBounds.x0, y: origBounds.y0 }),
-          new Point({ x: origBounds.x1, y: origBounds.y0 }),
-          new Point({ x: origBounds.x1, y: origBounds.y1 }),
-          new Point({ x: origBounds.x0, y: origBounds.y1 })
-        ])
+        const pc = new PointCluster({
+          topLeft: new Point({ x: origBounds.x0, y: origBounds.y0 }),
+          topRight: new Point({ x: origBounds.x1, y: origBounds.y0 }),
+          bottomRight: new Point({ x: origBounds.x1, y: origBounds.y1 }),
+          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 })
+        })
         findChildren(pc, 0, pushToMe)
       }
 
@@ -164,31 +167,35 @@ const samsSerif = opts => ({
       function findChildren (pc, angle, pushToMe) {
         pushToMe.push(pc)
 
-        const [pTopLeft, pTopRight, pBottomRight, pBottomLeft] = pc.getPoints()
-        const childCorner = new Point(pBottomLeft)
-        const parentCorner = childUseTop ? pTopLeft : pBottomLeft
+        const points = pc.getPoints()
+        const height = points.topLeft.distanceTo(points.bottomLeft)
+
+        const parentCartesian = (childUseTop ? points.topLeft : points.bottomLeft).asCartesian()
+        const childCorner = new Point(points.bottomLeft)
         childCorner.transform({
           type: 'translate',
-          x: pBottomRight.distanceTo(pBottomLeft) * childPositionXRatio,
+          x: height * childPositionXRatio,
           // negative because it should be above previous
-          y: -pTopLeft.distanceTo(pBottomLeft) * childPositionYRatio,
+          y: height * childPositionYRatio,
           angle
         })
+        const childCartesian = new Point(childCorner)
+
         const childPc = new PointCluster(pc)
         childPc.transform({
           type: 'translate',
-          x: childCorner.asCartesian().x - parentCorner.asCartesian().x,
-          y: childCorner.asCartesian().y - parentCorner.asCartesian().y
+          x: childCartesian.x - parentCartesian.x,
+          y: childCartesian.y - parentCartesian.y
         })
         childPc.transform({
           type: 'rotate',
-          center: childCorner.asCartesian(),
+          center: childCartesian,
           angle: childAngle
         })
         childPc.transform({
           type: 'scale',
           scale: childSize,
-          center: childCorner.asCartesian()
+          center: childCartesian
         })
 
         // we cannot accurately determine the area that a K, with children,
@@ -199,23 +206,24 @@ const samsSerif = opts => ({
       }
 
       function toRadius (pc) {
-        const [topLeft, , bottomRight ] = pc.getPoints()
-        return topLeft.distanceTo(bottomRight) / 2
+        const points = pc.getPoints()
+        return points.topLeft.distanceTo(points.bottomRight) / 2
       }
 
       function draw (pc) {
-        const [topLeft, topRight, bottomRight, bottomLeft] = pc.getPoints().map(c => c.asCartesian())
-        const centerLeft = pc.getPoints()[0].midpointTo(pc.getPoints()[3]).asCartesian()
-        ctx.moveTo(topLeft.x, topLeft.y)
-        ctx.lineTo(bottomLeft.x, bottomLeft.y)
+        const points = pc.getPoints()
+        const centerLeft = points.topLeft.midpointTo(points.bottomLeft).asCartesian()
+        const cartesians = mapValues(points, c => c.asCartesian())
+        ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
+        ctx.lineTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
         // to center left
         ctx.moveTo(centerLeft.x, centerLeft.y)
         // lower leg
-        ctx.lineTo(bottomRight.x, bottomRight.y)
+        ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
         // center left again
         ctx.moveTo(centerLeft.x, centerLeft.y)
         // upper leg
-        ctx.lineTo(topRight.x, topRight.y)
+        ctx.lineTo(cartesians.topRight.x, cartesians.topRight.y)
       }
     }
   },
