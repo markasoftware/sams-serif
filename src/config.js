@@ -26,6 +26,10 @@ module.exports = class Config {
       LChildSize: 0.85,
       OChildCount: 5,
       OInner: true,
+      RChildAngleDeg: 45,
+      RChildSize: 0.8,
+      RStraightWidth: 0.2,
+      RLegHeight: 0.65,
       TChildSize: 0.5
     }
 
@@ -35,6 +39,7 @@ module.exports = class Config {
     const datSs = this.dat.addFolder("Sam's Serif Settings")
 
     this.controllers = [
+      // I miss C with all its macros...
       datRender.add(this.renderConfig, 'horizontalSpacing', 0, 5),
       datRender.add(this.renderConfig, 'verticalSpacing', 0, 5),
       datRender.add(this.renderConfig, 'widthOverRadius', 0.01, 0.3),
@@ -46,13 +51,17 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'spaceRatio', 0.01, 5),
       datSs.add(this.samsSerifConfig, 'ELegSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'KChildAngleDeg', -180, 180),
-      datSs.add(this.samsSerifConfig, 'KChildSize', 0.01, 0.99),
-      datSs.add(this.samsSerifConfig, 'KChildPosition', 0.01, 0.99),
+      datSs.add(this.samsSerifConfig, 'KChildSize', 0.01, 0.995),
+      datSs.add(this.samsSerifConfig, 'KChildPosition', 0, 1),
       datSs.add(this.samsSerifConfig, 'KByTop'),
       datSs.add(this.samsSerifConfig, 'LChildSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
       datSs.add(this.samsSerifConfig, 'OChildCount', 2, 40, 1),
       datSs.add(this.samsSerifConfig, 'OInner'),
+      datSs.add(this.samsSerifConfig, 'RChildAngleDeg', -180, 180),
+      datSs.add(this.samsSerifConfig, 'RChildSize', 0.01, 0.995),
+      datSs.add(this.samsSerifConfig, 'RStraightWidth', 0, 1),
+      datSs.add(this.samsSerifConfig, 'RLegHeight', 0, 1),
       datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1)
     ]
 

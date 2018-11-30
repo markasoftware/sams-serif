@@ -144,6 +144,7 @@ const samsSerif = opts => ({
       const childUseTop = opts.KByTop
       const childAngle = opts.KChildAngleDeg * deg
       const childSize = opts.KChildSize
+      // negative because of flipped Y axis
       const childPositionYRatio = -(1 - opts.KChildPosition) / 2
       const childPositionXRatio = opts.KChildPosition * ratio
 
@@ -157,7 +158,8 @@ const samsSerif = opts => ({
           topLeft: new Point({ x: origBounds.x0, y: origBounds.y0 }),
           topRight: new Point({ x: origBounds.x1, y: origBounds.y0 }),
           bottomRight: new Point({ x: origBounds.x1, y: origBounds.y1 }),
-          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 })
+          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 }),
+          centerLeft: new Point({ x: origBounds.x0, y: (origBounds.y1 + origBounds.y0) / 2})
         })
         findChildren(pc, 0, pushToMe)
       }
@@ -175,7 +177,6 @@ const samsSerif = opts => ({
         childCorner.transform({
           type: 'translate',
           x: height * childPositionXRatio,
-          // negative because it should be above previous
           y: height * childPositionYRatio,
           angle
         })
@@ -212,16 +213,15 @@ const samsSerif = opts => ({
 
       function draw (pc) {
         const points = pc.getPoints()
-        const centerLeft = points.topLeft.midpointTo(points.bottomLeft).asCartesian()
         const cartesians = mapValues(points, c => c.asCartesian())
         ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
         ctx.lineTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
         // to center left
-        ctx.moveTo(centerLeft.x, centerLeft.y)
+        ctx.moveTo(cartesians.centerLeft.x, cartesians.centerLeft.y)
         // lower leg
         ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
         // center left again
-        ctx.moveTo(centerLeft.x, centerLeft.y)
+        ctx.moveTo(cartesians.centerLeft.x, cartesians.centerLeft.y)
         // upper leg
         ctx.lineTo(cartesians.topRight.x, cartesians.topRight.y)
       }
@@ -338,6 +338,103 @@ const samsSerif = opts => ({
       function draw (queueItem) {
         ctx.moveTo(queueItem.x + queueItem.radius, queueItem.y)
         ctx.arc(queueItem.x, queueItem.y, queueItem.radius, 0, Math.PI * 2)
+      }
+    }
+  },
+
+  'R': {
+    ratio: opts.standardRatio,
+    render: (ctx, origBox, limiter) => {
+      const ratio = opts.standardRatio
+      const childAngle = opts.RChildAngleDeg * deg
+      const childSize = opts.RChildSize
+      const straightRatio = opts.RStraightWidth * ratio
+      const legRatio = opts.RLegHeight
+      const circleRadiusRatio = (1 - legRatio) / 2
+      const childPositionYRatio = -(1 - opts.RChildPosition) / 2
+      const childPositionXRatio = opts.RChildPosition * ratio
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      // Point cluster for K is simply the bounding box. Derp.
+      // starts at topLeft, then clockwise
+      function find (pushToMe) {
+        const origBounds = origBox.getBounds()
+        const height = origBox.getDimensions().y
+        const pc = new PointCluster({
+          topLeft: new Point({ x: origBounds.x0, y: origBounds.y0 }),
+          arcStart: new Point({ x: origBounds.x0 + straightRatio * height, y: origBounds.y0 }),
+          arcEnd: new Point({ x: origBounds.x0 + straightRatio * height, y: origBounds.y1 - legRatio * height}),
+          arcCenter: new Point({
+            x: origBounds.x0 + straightRatio * height,
+            y: (origBounds.y1 - legRatio * height + origBounds.y0) / 2
+          }),
+          bottomRight: new Point({ x: origBounds.x1, y: origBounds.y1 }),
+          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 }),
+          legStart: new Point({ x: origBounds.x0, y: origBounds.y1 - legRatio * height})
+        })
+        findChildren(pc, 0, pushToMe)
+      }
+
+      // TODO: remove redundancy in this function (it's almost identical in K & R. No, not *that* K & R!)
+      function findChildren (pc, angle, pushToMe) {
+        pushToMe.push(pc)
+
+        const points = pc.getPoints()
+        const height = points.topLeft.distanceTo(points.bottomLeft)
+
+        const parentCartesian = points.bottomLeft).asCartesian()
+        const childCorner = new Point(points.bottomLeft)
+        childCorner.transform({
+          type: 'translate',
+          x: height * childPositionXRatio,
+          y: height * childPositionYRatio,
+          angle
+        })
+        const childCartesian = new Point(childCorner)
+
+        const childPc = new PointCluster(pc)
+        childPc.transform({
+          type: 'translate',
+          x: childCartesian.x - parentCartesian.x,
+          y: childCartesian.y - parentCartesian.y
+        })
+        childPc.transform({
+          type: 'rotate',
+          center: childCartesian,
+          angle: childAngle
+        })
+        childPc.transform({
+          type: 'scale',
+          scale: childSize,
+          center: childCartesian
+        })
+
+        if (limiter.shouldRenderRadius(toRadius(childPc))) {
+          findChildren(childPc, angle + childAngle, pushToMe)
+        }
+      }
+
+      function toRadius (pc) {
+        const points = pc.getPoints()
+        return points.topLeft.distanceTo(points.bottomRight) / 2
+      }
+
+      function draw (pc) {
+        const points = pc.getPoints()
+        const cartesians = mapValues(points, c => c.asCartesian())
+        ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
+        // upper straight
+        ctx.lineTo(cartesians.arcStart.x, cartesians.arcStart.y)
+        // circle
+        limiter.arcByPoints(points.arcCenter, points.arcStart, points.arcEnd)
+        // lower straight
+        ctx.lineTo(cartesians.legStart.x, cartesians.legStart.y)
+        // leg
+        ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
+        // spine
+        ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
+        ctx.lineTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
       }
     }
   },

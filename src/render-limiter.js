@@ -106,7 +106,7 @@ module.exports = class RenderLimiter {
    * @param {Point} the start of the arc
    * @param {Point} the end of the arc
    */
-  drawArcByPoints (center, start, end) {
+  arcByPoints (center, start, end) {
     const centerCartesian = center.asCartesian()
     const startCartesian = start.asCartesian()
     const startPolar = start.asPolar()
