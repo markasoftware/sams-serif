@@ -65,6 +65,9 @@ module.exports = class RenderLimiter {
     this.canvasCtx.lineWidth = this.lineWidth
     this.canvasCtx.strokeStyle = this.color
     this.canvasCtx.fillStyle = this.color
+
+    this.canvasCtx.lineCap = 'square'
+    this.canvasCtx.lineJoin = 'bevel'
   }
 
   /**
@@ -72,14 +75,22 @@ module.exports = class RenderLimiter {
    * @param {number} x X coordinate of the line
    * @param {number} x Y coordinate of the top of the line
    * @param {number} length length of the line
+   *
+   * TODO: remove redundancies with drawHorizontalLine
    */
-  drawVerticalLine (x, y, length) {
+  drawVerticalLine (x, y, length, square) {
     x = Math.floor(x)
     y = Math.floor(y)
     length = Math.round(length)
     const widthRadius = Math.round(this.lineWidth / 2)
 
-    this.canvasCtx.fillRect(x - widthRadius, y, this.lineWidth, length)
+    this.canvasCtx.fillRect(
+      x - widthRadius,
+      square ? y - widthRadius : y,
+      this.lineWidth,
+      // * 2 because our start is moved up
+      square ? length + widthRadius * 2 : length
+    )
   }
 
   /**
@@ -89,13 +100,17 @@ module.exports = class RenderLimiter {
    * @param {number} length of the line
    * @returns {null}
    */
-  drawHorizontalLine (x, y, length) {
+  drawHorizontalLine (x, y, length, square) {
     x = Math.round(x)
     y = Math.round(y)
     length = Math.round(length)
     const widthRadius = Math.round(this.lineWidth / 2)
 
-    this.canvasCtx.fillRect(x, y - widthRadius, length, this.lineWidth)
+    this.canvasCtx.fillRect(
+      square ? x - widthRadius : x,
+      y - widthRadius,
+      square ? length + widthRadius * 2 : length,
+      this.lineWidth)
   }
 
   /**
@@ -109,8 +124,8 @@ module.exports = class RenderLimiter {
   arcByPoints (center, start, end) {
     const centerCartesian = center.asCartesian()
     const startCartesian = start.asCartesian()
-    const startPolar = start.asPolar()
-    const endPolar = end.asPolar()
+    const startPolar = start.asPolar(centerCartesian)
+    const endPolar = end.asPolar(centerCartesian)
 
     this.canvasCtx.moveTo(startCartesian.x, startCartesian.y)
     this.canvasCtx.arc(

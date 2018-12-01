@@ -26,10 +26,10 @@ module.exports = class Config {
       LChildSize: 0.85,
       OChildCount: 5,
       OInner: true,
-      RChildAngleDeg: 45,
-      RChildSize: 0.8,
-      RStraightWidth: 0.2,
-      RLegHeight: 0.65,
+      RChildAngleDeg: 35,
+      RChildSize: 0.75,
+      RStraightWidth: 0.6,
+      RLegHeight: 0.6,
       TChildSize: 0.5
     }
 
@@ -58,7 +58,7 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
       datSs.add(this.samsSerifConfig, 'OChildCount', 2, 40, 1),
       datSs.add(this.samsSerifConfig, 'OInner'),
-      datSs.add(this.samsSerifConfig, 'RChildAngleDeg', -180, 180),
+      datSs.add(this.samsSerifConfig, 'RChildAngleDeg', 0, 90),
       datSs.add(this.samsSerifConfig, 'RChildSize', 0.01, 0.995),
       datSs.add(this.samsSerifConfig, 'RStraightWidth', 0, 1),
       datSs.add(this.samsSerifConfig, 'RLegHeight', 0, 1),

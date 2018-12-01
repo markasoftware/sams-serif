@@ -30,7 +30,7 @@ const samsSerif = opts => ({
       limiter.threePartRender(find, toRadius, draw)
 
       limiter.preDraw(wholeRadius)
-      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y)
+      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y, true)
       // the children do not draw their bottom lines
       limiter.drawHorizontalLine(xLeft, origBox.getBounds().y1, Math.ceil(origBox.getDimensions().y * straightLineRatio))
 
@@ -90,7 +90,7 @@ const samsSerif = opts => ({
 
       // vertical line
       limiter.preDraw(origBox.getDimensions().y / 2)
-      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y)
+      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y, true)
 
       // big top and bottom lines. Yeah Linus, it's not "good taste"
       draw({ y: origBox.getBounds().y0, length: initLength })
@@ -275,7 +275,10 @@ const samsSerif = opts => ({
         }
         limiter.preDraw(box.getRadius())
         const drawLine = isVertical ? limiter.drawVerticalLine.bind(limiter) : limiter.drawHorizontalLine.bind(limiter)
-        drawLine(lineLeft, lineTop, curLength)
+        // TODO: squaring off on the L lines isn't correct because each is
+        // smaller than the last. It requires knowledge of the width of the
+        // next child line, which we conveniently have
+        drawLine(lineLeft, lineTop, curLength, true)
       }
     }
   },
@@ -351,8 +354,18 @@ const samsSerif = opts => ({
       const straightRatio = opts.RStraightWidth * ratio
       const legRatio = opts.RLegHeight
       const circleRadiusRatio = (1 - legRatio) / 2
-      const childPositionYRatio = -(1 - opts.RChildPosition) / 2
-      const childPositionXRatio = opts.RChildPosition * ratio
+
+      const ntan = -Math.tan(-childAngle)
+      const childPositionXRatio = ratio * (
+          circleRadiusRatio * ntan +
+          circleRadiusRatio * Math.sin(-childAngle) * ntan -
+          straightRatio -
+          circleRadiusRatio * Math.cos(-childAngle)
+        ) / (
+          -legRatio * ntan - ratio
+        )
+      const childPositionYRatio = legRatio * childPositionXRatio / ratio - legRatio
+      console.log(childPositionXRatio, childPositionYRatio)
 
       limiter.threePartRender(find, toRadius, draw)
 
@@ -383,7 +396,7 @@ const samsSerif = opts => ({
         const points = pc.getPoints()
         const height = points.topLeft.distanceTo(points.bottomLeft)
 
-        const parentCartesian = points.bottomLeft).asCartesian()
+        const parentCartesian = points.bottomLeft.asCartesian()
         const childCorner = new Point(points.bottomLeft)
         childCorner.transform({
           type: 'translate',
