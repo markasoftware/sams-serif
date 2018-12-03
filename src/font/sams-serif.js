@@ -1,7 +1,6 @@
 'use strict'
 
 const assert = require('assert')
-const mapValues = require('just-map-values')
 
 const Box = require('../box')
 const PointCluster = require('../point-cluster')
@@ -138,9 +137,9 @@ const samsSerif = opts => ({
   },
 
   'K': {
-    ratio: opts.standardRatio,
+    ratio: opts.narrowRatio,
     render: (ctx, origBox, limiter) => {
-      const ratio = opts.standardRatio
+      const ratio = opts.narrowRatio
       const childUseTop = opts.KByTop
       const childAngle = opts.KChildAngleDeg * deg
       const childSize = opts.KChildSize
@@ -155,12 +154,9 @@ const samsSerif = opts => ({
       function find (pushToMe) {
         const origBounds = origBox.getBounds()
         const pc = new PointCluster({
-          topLeft: new Point({ x: origBounds.x0, y: origBounds.y0 }),
-          topRight: new Point({ x: origBounds.x1, y: origBounds.y0 }),
-          bottomRight: new Point({ x: origBounds.x1, y: origBounds.y1 }),
-          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 }),
-          centerLeft: new Point({ x: origBounds.x0, y: (origBounds.y1 + origBounds.y0) / 2})
+          centerLeft: new Point({ x: origBounds.x0, y: (origBounds.y1 + origBounds.y0) / 2 })
         })
+        pc.addBounds(origBounds)
         findChildren(pc, 0, pushToMe)
       }
 
@@ -212,8 +208,7 @@ const samsSerif = opts => ({
       }
 
       function draw (pc) {
-        const points = pc.getPoints()
-        const cartesians = mapValues(points, c => c.asCartesian())
+        const cartesians = pc.getCartesians()
         ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
         ctx.lineTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
         // to center left
@@ -229,7 +224,7 @@ const samsSerif = opts => ({
   },
 
   'L': {
-    ratio: opts.standardRatio,
+    ratio: opts.narrowRatio,
     render: (ctx, origBox, limiter) => {
       const bounds = origBox.getBounds()
       const dim = origBox.getDimensions()
@@ -283,6 +278,13 @@ const samsSerif = opts => ({
     }
   },
 
+  'M': {
+    ratio: opts.wideRatio,
+    render: (ctx, origBox, limiter) => {
+      renderMLike(ctx, origBox, limiter, opts.MSpacing, opts.MDepth, opts.MChildSize)
+    }
+  },
+
   'O': {
     ratio: 1,
     render: (ctx, origBox, limiter) => {
@@ -314,9 +316,10 @@ const samsSerif = opts => ({
         }
         pushToMe.push({ x, y, radius })
 
-        const childRadius = radius * childWidthMultiplier
-        const innerRadius = radius * innerWidthMultiplier
-        const toChildRadius = radius * (childWidthMultiplier + innerWidthMultiplier)
+        const cleanRadius = radius - limiter.getWidthByRadius(radius) / 2
+        const childRadius = cleanRadius * childWidthMultiplier
+        const innerRadius = cleanRadius * innerWidthMultiplier
+        const toChildRadius = cleanRadius * (childWidthMultiplier + innerWidthMultiplier)
         if (limiter.shouldRenderRadius(childRadius)) {
           for (let i = 0; i < childCount; i++) {
             const theta = Math.PI * 2 * (i / childCount)
@@ -346,9 +349,9 @@ const samsSerif = opts => ({
   },
 
   'R': {
-    ratio: opts.standardRatio,
+    ratio: opts.narrowRatio,
     render: (ctx, origBox, limiter) => {
-      const ratio = opts.standardRatio
+      const ratio = opts.narrowRatio
       const childAngle = opts.RChildAngleDeg * deg
       const childSize = opts.RChildSize
       const straightRatio = opts.RStraightWidth * ratio
@@ -357,13 +360,13 @@ const samsSerif = opts => ({
 
       const ntan = -Math.tan(-childAngle)
       const childPositionXRatio = ratio * (
-          circleRadiusRatio * ntan +
+        circleRadiusRatio * ntan +
           circleRadiusRatio * Math.sin(-childAngle) * ntan -
           straightRatio -
           circleRadiusRatio * Math.cos(-childAngle)
-        ) / (
-          -legRatio * ntan - ratio
-        )
+      ) / (
+        -legRatio * ntan - ratio
+      )
       const childPositionYRatio = legRatio * childPositionXRatio / ratio - legRatio
       console.log(childPositionXRatio, childPositionYRatio)
 
@@ -375,17 +378,15 @@ const samsSerif = opts => ({
         const origBounds = origBox.getBounds()
         const height = origBox.getDimensions().y
         const pc = new PointCluster({
-          topLeft: new Point({ x: origBounds.x0, y: origBounds.y0 }),
           arcStart: new Point({ x: origBounds.x0 + straightRatio * height, y: origBounds.y0 }),
-          arcEnd: new Point({ x: origBounds.x0 + straightRatio * height, y: origBounds.y1 - legRatio * height}),
+          arcEnd: new Point({ x: origBounds.x0 + straightRatio * height, y: origBounds.y1 - legRatio * height }),
           arcCenter: new Point({
             x: origBounds.x0 + straightRatio * height,
             y: (origBounds.y1 - legRatio * height + origBounds.y0) / 2
           }),
-          bottomRight: new Point({ x: origBounds.x1, y: origBounds.y1 }),
-          bottomLeft: new Point({ x: origBounds.x0, y: origBounds.y1 }),
-          legStart: new Point({ x: origBounds.x0, y: origBounds.y1 - legRatio * height})
+          legStart: new Point({ x: origBounds.x0, y: origBounds.y1 - legRatio * height })
         })
+        pc.addBounds(origBounds)
         findChildren(pc, 0, pushToMe)
       }
 
@@ -434,8 +435,7 @@ const samsSerif = opts => ({
       }
 
       function draw (pc) {
-        const points = pc.getPoints()
-        const cartesians = mapValues(points, c => c.asCartesian())
+        const cartesians = pc.getCartesians()
         ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
         // upper straight
         ctx.lineTo(cartesians.arcStart.x, cartesians.arcStart.y)
@@ -522,5 +522,95 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
       limiter.drawHorizontalLine(bounds.x0, bounds.y1, bounds.x1 - bounds.x0)
     }
     limiter.drawVerticalLine(bounds.x0 + (bounds.x1 - bounds.x0) / 2, bounds.y0, bounds.y1 - bounds.y0)
+  }
+}
+
+function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
+  const obb = origBox.getBounds()
+  const obd = origBox.getDimensions()
+  // acute angle between the vertical and the first side of an M or W
+  const theta = Math.PI / 2 - Math.atan(obd.y / (obd.x * (1-spacing) / 2))
+  console.log(`Theta: ${theta}`)
+
+  limiter.threePartRender(find, toRadius, draw)
+
+  function find (pushToMe) {
+    const pc = new PointCluster({
+      center: new Point({ x: origBox.getCenter().x, y: obb.y0 + depth * obd.y }),
+      upperLeft: new Point({ x: obb.x0 + (1-spacing) * obd.x / 2, y: obb.y0 }),
+      upperRight: new Point({ x: obb.x1 - (1-spacing) * obd.x / 2, y: obb.y0 })
+    })
+    pc.addBounds(obb)
+
+    let initAngle = 0
+    if (isW) {
+      pc.transform({
+        type: 'rotate',
+        center: obb.getCenter(),
+        angle: Math.PI
+      })
+      initAngle = Math.PI
+    }
+
+    findChildren(pc, initAngle, pushToMe)
+  }
+
+  function findChildren (pc, angle, pushToMe) {
+    pushToMe.push(pc)
+    side(false)
+    side(true)
+
+    function side (isRight) {
+      const points = pc.getPoints()
+      const cartesians = pc.getCartesians()
+      const sidePc = new PointCluster(pc)
+
+      const center = {
+          x: isRight ? cartesians.bottomRight.x : cartesians.bottomLeft.x,
+          y: isW ? cartesians.topLeft.y : cartesians.bottomLeft.y
+      }
+      if (isRight) {
+        console.log(center)
+      }
+      const rotAngle = (isRight ? -1 : 1) * (isW ? Math.PI / 2 - theta : Math.PI / 2 + theta)
+
+      sidePc.transform({
+        type: 'rotate',
+        center,
+        angle: rotAngle
+      })
+      sidePc.transform({
+        type: 'scale',
+        center,
+        scale: childSize * points.bottomLeft.distanceTo(points.upperLeft) / points.bottomLeft.distanceTo(points.bottomRight)
+      })
+      if (!isW) {
+        const sidePcPoints = sidePc.getPoints()
+        sidePc.transform({
+          type: 'translate',
+          angle: rotAngle + angle,
+          x: (isRight ? 1 : -1 ) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
+          y: 0
+        })
+      }
+      // TODO: this could cause things to get cutoff in the W (things can be rendered out-of-box)
+      if (limiter.shouldRender(sidePc.getBoundingBox())) {
+        findChildren(sidePc, angle + rotAngle, pushToMe)
+      }
+    }
+  }
+
+  function toRadius (pc) {
+    const points = pc.getPoints()
+    return points.topLeft.distanceTo(points.bottomRight) / 2
+  }
+
+  function draw (pc) {
+    const cartesians = pc.getCartesians()
+    ctx.moveTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
+    ctx.lineTo(cartesians.upperLeft.x, cartesians.upperLeft.y)
+    ctx.lineTo(cartesians.center.x, cartesians.center.y)
+    ctx.lineTo(cartesians.upperRight.x, cartesians.upperRight.y)
+    ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
   }
 }

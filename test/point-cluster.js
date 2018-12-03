@@ -11,11 +11,20 @@ test('POINTCLUSTER: Get and set', t => {
     bottomRight: new Point({ x: 5, y: 5 }),
     bottomLeft: new Point({ x: 0, y: 5 })
   })
-  t.deepEqual(Object.keys(square.getPoints()), [ 'topLeft', 'topRight', 'bottomRight', 'bottomLeft'], 'correct keys')
+  t.deepEqual(Object.keys(square.getPoints()), [ 'topLeft', 'topRight', 'bottomRight', 'bottomLeft' ], 'correct keys')
   t.deepEqual(square.getPoints().bottomRight, { x: 5, y: 5 }, 'correct bottomRight')
   const square2 = new PointCluster(square)
-  t.deepEqual(Object.keys(square2.getPoints()), [ 'topLeft', 'topRight', 'bottomRight', 'bottomLeft'], 'correct keys square2')
+  t.deepEqual(Object.keys(square2.getPoints()), [ 'topLeft', 'topRight', 'bottomRight', 'bottomLeft' ], 'correct keys square2')
   t.deepEqual(square2.getPoints().bottomRight, { x: 5, y: 5 }, 'correct bottomRight square2')
+
+  t.end()
+})
+
+test('POINTCLUSTER: Set by bounds', t => {
+  const square = new PointCluster()
+  square.addBounds({ x0: 0, x1: 5, y0: 0, y1: 5 })
+  t.deepEqual(Object.keys(square.getPoints()), [ 'topLeft', 'topRight', 'bottomRight', 'bottomLeft' ], 'correct keys')
+  t.deepEqual(square.getPoints().bottomRight, { x: 5, y: 5 }, 'correct bottomRight')
 
   t.end()
 })

@@ -10,6 +10,7 @@ module.exports = class Point {
       this.y = oldCartesian.y
     } else if (typeof arg.x === 'number') {
       // cartesian coordinates
+      assert(!isNaN(arg.x) && !isNaN(arg.y), 'point constructor not NaN')
       this.x = arg.x
       this.y = arg.y
     } else if (arg.center) {

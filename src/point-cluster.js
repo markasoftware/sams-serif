@@ -11,13 +11,23 @@ module.exports = class PointCluster {
     if (points instanceof PointCluster) {
       this.points = mapValues(points.getPoints(), c => new Point(c))
     } else {
-      assert(Object.keys(points).length > 0, 'must be at least one point')
-      this.points = points
+      this.points = points || {}
     }
+  }
+
+  addBounds(bounds) {
+    this.points.topLeft = new Point({ x: bounds.x0, y: bounds.y0 })
+    this.points.topRight = new Point({x: bounds.x1, y: bounds.y0 })
+    this.points.bottomRight = new Point({ x: bounds.x1, y: bounds.y1 })
+    this.points.bottomLeft = new Point({ x: bounds.x0, y: bounds.y1 })
   }
 
   getPoints () {
     return this.points
+  }
+
+  getCartesians() {
+    return mapValues(this.points, c => c.asCartesian())
   }
 
   getBounds () {
