@@ -435,6 +435,7 @@ const samsSerif = opts => ({
       }
 
       function draw (pc) {
+        const points = pc.getPoints()
         const cartesians = pc.getCartesians()
         ctx.moveTo(cartesians.topLeft.x, cartesians.topLeft.y)
         // upper straight
@@ -457,7 +458,14 @@ const samsSerif = opts => ({
     render: (ctx, origBox, limiter) => {
       renderILike(ctx, origBox, limiter, true, false, opts.TChildSize, opts.standardRatio)
     }
-  }
+  },
+
+  'W': {
+    ratio: opts.wideRatio,
+    render: (ctx, origBox, limiter) => {
+      renderMLike(ctx, origBox, limiter, opts.WSpacing, opts.WDepth, opts.WChildSize, true)
+    }
+  },
 
 })
 module.exports = samsSerif
@@ -530,7 +538,6 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
   const obd = origBox.getDimensions()
   // acute angle between the vertical and the first side of an M or W
   const theta = Math.PI / 2 - Math.atan(obd.y / (obd.x * (1-spacing) / 2))
-  console.log(`Theta: ${theta}`)
 
   limiter.threePartRender(find, toRadius, draw)
 
@@ -546,7 +553,7 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
     if (isW) {
       pc.transform({
         type: 'rotate',
-        center: obb.getCenter(),
+        center: origBox.getCenter(),
         angle: Math.PI
       })
       initAngle = Math.PI
@@ -557,22 +564,16 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
 
   function findChildren (pc, angle, pushToMe) {
     pushToMe.push(pc)
-    side(false)
     side(true)
+    side(false)
 
     function side (isRight) {
       const points = pc.getPoints()
       const cartesians = pc.getCartesians()
       const sidePc = new PointCluster(pc)
 
-      const center = {
-          x: isRight ? cartesians.bottomRight.x : cartesians.bottomLeft.x,
-          y: isW ? cartesians.topLeft.y : cartesians.bottomLeft.y
-      }
-      if (isRight) {
-        console.log(center)
-      }
-      const rotAngle = (isRight ? -1 : 1) * (isW ? Math.PI / 2 - theta : Math.PI / 2 + theta)
+      const center = isRight ? cartesians.bottomRight : cartesians.bottomLeft
+      const rotAngle = (isRight ? -1 : 1) * (isW ? -Math.PI / 2 + theta : Math.PI / 2 + theta)
 
       sidePc.transform({
         type: 'rotate',
