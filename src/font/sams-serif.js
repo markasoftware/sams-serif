@@ -564,6 +564,7 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
 
   function findChildren (pc, angle, pushToMe) {
     pushToMe.push(pc)
+    const widthOffset = limiter.getWidthByRadius(toRadius(pc)) / 2
     side(true)
     side(false)
 
@@ -585,15 +586,13 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
         center,
         scale: childSize * points.bottomLeft.distanceTo(points.upperLeft) / points.bottomLeft.distanceTo(points.bottomRight)
       })
-      if (!isW) {
-        const sidePcPoints = sidePc.getPoints()
-        sidePc.transform({
-          type: 'translate',
-          angle: rotAngle + angle,
-          x: (isRight ? 1 : -1 ) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
-          y: 0
-        })
-      }
+      const sidePcPoints = sidePc.getPoints()
+      sidePc.transform({
+        type: 'translate',
+        angle: rotAngle + angle,
+        x: isW ? 0 : (isRight ? 1 : -1 ) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
+        y: -widthOffset
+      })
       // TODO: this could cause things to get cutoff in the W (things can be rendered out-of-box)
       if (limiter.shouldRender(sidePc.getBoundingBox())) {
         findChildren(sidePc, angle + rotAngle, pushToMe)
