@@ -28,6 +28,10 @@ module.exports = class Controller {
 
     // also sets this.canvasViewport
     this._linkCanvas()
+    window.addEventListener('resize', e => {
+      this._resizeCanvas()
+      this._raf()
+    })
 
     this.keyLogger = new KeyLogger()
     this.panHandler = new PanHandler(this.canvasViewport.getBounds())
@@ -44,19 +48,21 @@ module.exports = class Controller {
 
   _linkCanvas () {
     this.canvasCtx = this.canvasEl.getContext('2d')
+    this._resizeCanvas()
+  }
 
+  _resizeCanvas () {
     // TODO: this dpiRatio stuff I got from some article online doesn't actually work -- it still looks fuzzy on mobile
     const devicePixelRatio = window.devicePixelRatio || 1
     const backingStoreRatio = this.canvasCtx.backingStorePixelRatio || 1
     const dpiRatio = devicePixelRatio / backingStoreRatio
-    this.canvasCtx.scale(dpiRatio, dpiRatio)
 
-    const canvasBounds = { x0: 0, y0: 0, x1: window.innerWidth, y1: window.innerHeight }
+    const canvasBounds = { x0: 0, y0: 0, x1: document.body.clientWidth * dpiRatio, y1: document.body.clientHeight * dpiRatio }
     this.canvasViewport = new Box(canvasBounds)
-    this.canvasEl.width = window.innerWidth * dpiRatio
-    this.canvasEl.height = canvasBounds.y1 * dpiRatio
-    this.canvasEl.style.width = window.innerWidth
-    this.canvasEl.style.height = window.innerHeight
+    this.canvasEl.width = document.body.clientWidth * dpiRatio
+    this.canvasEl.height = document.body.clientHeight * dpiRatio
+    this.canvasEl.style.width = document.body.clientWidth
+    this.canvasEl.style.height = document.body.clientHeight
   }
 
   _raf () {
