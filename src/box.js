@@ -39,6 +39,7 @@ module.exports = class Box {
     this.y1 = center.y - (center.y - this.y1) * percent
     this.x0 = center.x - (center.x - this.x0) * percent
     this.x1 = center.x - (center.x - this.x1) * percent
+    return this
   }
 
   pan (x, y) {

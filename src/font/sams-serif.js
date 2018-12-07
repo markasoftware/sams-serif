@@ -285,6 +285,62 @@ const samsSerif = opts => ({
     }
   },
 
+  'N': {
+    ratio: opts.narrowRatio,
+    render: (ctx, origBox, limiter) => {
+      const childSize = opts.NChildSize
+      const containChildrenMultiplier = 1 / (1 - childSize)
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      function find(pushToMe) {
+        const rootPc = new PointCluster()
+        rootPc.addBounds(origBox.getBounds())
+        pushToMe.push(rootPc)
+        findChildren(rootPc, true, pushToMe)
+        findChildren(rootPc, false, pushToMe)
+      }
+
+      function findChildren(parentPc, isRight, pushToMe) {
+        // unlike many of the letters, this one pushes the child N only, not the one passed in.
+        // this is because the center one should only be rendered once, in the main find
+        const childPc = new PointCluster(parentPc)
+        const scalePoint = isRight ? childPc.getPoints().topLeft : childPc.getPoints().bottomRight
+        childPc.transform({
+          type: 'translate',
+          x: (isRight ? 1 : -1) * parentPc.getBoundingBox().getDimensions().x,
+          y: 0
+        })
+        childPc.transform({
+          type: 'scale',
+          center: scalePoint,
+          scale: childSize
+        })
+        const childBox = childPc.getBoundingBox()
+        const childRadius = childBox.getRadius()
+        // TODO: scaling by 4 only makes the sides go out 2x further. Why didn't we need to do this elsewhere? Are otherbounds way too large? Kowalski, Analysis!
+        childBox.scale(containChildrenMultiplier * 2)
+        if (limiter.shouldRender(childBox) && limiter.shouldRenderRadius(childRadius)) {
+          pushToMe.push(childPc)
+          findChildren(childPc, isRight, pushToMe)
+        }
+      }
+
+      function toRadius(pc) {
+        const points = pc.getPoints()
+        return points.topLeft.distanceTo(points.bottomLeft) / 2
+      }
+
+      function draw(pc) {
+        const cartesians = pc.getCartesians()
+        ctx.moveTo(cartesians.topRight.x, cartesians.topRight.y)
+        ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
+        ctx.lineTo(cartesians.topLeft.x, cartesians.topLeft.y)
+        ctx.lineTo(cartesians.bottomLeft.x, cartesians.bottomLeft.y)
+      }
+    }
+  },
+
   'O': {
     ratio: 1,
     render: (ctx, origBox, limiter) => {
@@ -475,9 +531,8 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
   const childWidthMultiplier = childSize
   // END CONFIGURATION
 
-  // scaling a box around the main I by this will make it contain all children.
-  // This is because infinite sum x^(-n) = 1/(x-1)
-  const addChildrenMultiplier = 1 / (1 / childWidthMultiplier - 1) + 1
+  // Infinite geometric series: Sum of r^n is 1/(1-r) for n from 1 -> Infinity
+  const containChildrenMultiplier = 1 / (1 - childSize)
   const dim = origBox.getDimensions()
   const bounds = origBox.getBounds()
 
@@ -497,7 +552,7 @@ function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize,
     }
     const box = new Box(bounds)
     const boxWithChildren = new Box(bounds)
-    boxWithChildren.scale(addChildrenMultiplier)
+    boxWithChildren.scale(containChildrenMultiplier)
 
     if (!limiter.shouldRender(boxWithChildren)) {
       return
@@ -537,7 +592,9 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
   const obb = origBox.getBounds()
   const obd = origBox.getDimensions()
   // acute angle between the vertical and the first side of an M or W
-  const theta = Math.PI / 2 - Math.atan(obd.y / (obd.x * (1-spacing) / 2))
+  const theta = Math.PI / 2 - Math.atan(obd.y / (obd.x * (1 - spacing) / 2))
+  // TODO: this is overly sensitive to bignums
+  const legLengthPerWidth = (obd.y ** 2 + ((1 - spacing) * obd.x / 2) ** 2) ** 0.5 / obd.x
 
   limiter.threePartRender(find, toRadius, draw)
 
@@ -584,7 +641,7 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
       sidePc.transform({
         type: 'scale',
         center,
-        scale: childSize * points.bottomLeft.distanceTo(points.upperLeft) / points.bottomLeft.distanceTo(points.bottomRight)
+        scale: childSize * legLengthPerWidth
       })
       const sidePcPoints = sidePc.getPoints()
       sidePc.transform({
@@ -593,8 +650,10 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
         x: isW ? 0 : (isRight ? 1 : -1 ) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
         y: -widthOffset
       })
-      // TODO: this could cause things to get cutoff in the W (things can be rendered out-of-box)
-      if (limiter.shouldRender(sidePc.getBoundingBox())) {
+      if (limiter.shouldRender(
+        // W children are outside of their parents
+        isW ? sidePc.getBoundingBox().scale(1 / (1 - childSize * legLengthPerWidth)) : sidePc.getBoundingBox()
+      ) && limiter.shouldRenderRadius(toRadius(sidePc))) {
         findChildren(sidePc, angle + rotAngle, pushToMe)
       }
     }
