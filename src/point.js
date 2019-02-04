@@ -38,11 +38,7 @@ module.exports = class Point {
     if (this.x === center.x && this.y === center.y) {
       toReturn.angle = 0
     } else {
-      toReturn.angle = Math.atan((this.y - center.y) / (this.x - center.x))
-      // handle arctan only being defined on (-Pi/2) through (Pi/2)
-      if (this.x < center.x) {
-        toReturn.angle += Math.PI
-      }
+      toReturn.angle = Math.atan2(this.y - center.y, this.x - center.x)
     }
 
     return toReturn
