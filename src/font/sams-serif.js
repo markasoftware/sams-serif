@@ -78,6 +78,55 @@ const samsSerif = opts => ({
     }
   },
 
+  'C': {
+    ratio: 0.5,
+    render: (ctx, origBox, limiter) => {
+      const childAngle = opts.CChildAngle;
+      const childSize = opts.CChildSize;
+
+      const origBounds = origBox.getBounds();
+      const baseArc = { xCenter: origBounds.x1, yCenter: origBounds.y1 / 2 + origBounds.y0 / 2, radius: origBox.getDimensions().y / 2, angle: Math.PI / 2 }
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      function find(pushToMe) {
+        pushToMe.push(baseArc)
+        findChildren({ ...baseArc, angle: 0 }, pushToMe)
+      }
+
+      function findChildren(lastArc, pushToMe) {
+        const radius = lastArc.radius * childSize;
+        if (!limiter.shouldRenderRadius(radius)) {
+          return
+        }
+        // or, alternatively, Math.PI / 2 - (Math.PI / 2 - lastArc.angle) * childAngle
+        const angle = lastArc.angle + (Math.PI / 2 - lastArc.angle) * childAngle;
+        const xArcStart = baseArc.xCenter - Math.cos(angle) * baseArc.radius
+        const yArcStart = baseArc.yCenter + Math.sin(angle) * baseArc.radius
+        const arc = {
+          xArcStart,
+          yArcStart,
+          xCenter: xArcStart + Math.cos(angle) * radius,
+          yCenter: yArcStart - Math.sin(angle) * radius,
+          angle,
+          radius,
+        }
+        pushToMe.push(arc)
+        findChildren(arc, pushToMe)
+      }
+
+      function toRadius (arc) {
+        return arc.radius
+      }
+
+      function draw(arc) {
+        // i wish this wasn't necessary
+        ctx.moveTo(arc.xArcStart, arc.yArcStart)
+        ctx.arc(arc.xCenter, arc.yCenter, arc.radius, Math.PI - arc.angle, -Math.PI / 2)
+      }
+    }
+  },
+
   'E': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
@@ -293,7 +342,7 @@ const samsSerif = opts => ({
 
       limiter.threePartRender(find, toRadius, draw)
 
-      function find(pushToMe) {
+      function find (pushToMe) {
         const rootPc = new PointCluster()
         rootPc.addBounds(origBox.getBounds())
         pushToMe.push(rootPc)
@@ -301,7 +350,7 @@ const samsSerif = opts => ({
         findChildren(rootPc, false, pushToMe)
       }
 
-      function findChildren(parentPc, isRight, pushToMe) {
+      function findChildren (parentPc, isRight, pushToMe) {
         // unlike many of the letters, this one pushes the child N only, not the one passed in.
         // this is because the center one should only be rendered once, in the main find
         const childPc = new PointCluster(parentPc)
@@ -326,12 +375,12 @@ const samsSerif = opts => ({
         }
       }
 
-      function toRadius(pc) {
+      function toRadius (pc) {
         const points = pc.getPoints()
         return points.topLeft.distanceTo(points.bottomLeft) / 2
       }
 
-      function draw(pc) {
+      function draw (pc) {
         const cartesians = pc.getCartesians()
         ctx.moveTo(cartesians.topRight.x, cartesians.topRight.y)
         ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
@@ -521,7 +570,7 @@ const samsSerif = opts => ({
     render: (ctx, origBox, limiter) => {
       renderMLike(ctx, origBox, limiter, opts.WSpacing, opts.WDepth, opts.WChildSize, true)
     }
-  },
+  }
 
 })
 module.exports = samsSerif
@@ -601,8 +650,8 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
   function find (pushToMe) {
     const pc = new PointCluster({
       center: new Point({ x: origBox.getCenter().x, y: obb.y0 + depth * obd.y }),
-      upperLeft: new Point({ x: obb.x0 + (1-spacing) * obd.x / 2, y: obb.y0 }),
-      upperRight: new Point({ x: obb.x1 - (1-spacing) * obd.x / 2, y: obb.y0 })
+      upperLeft: new Point({ x: obb.x0 + (1 - spacing) * obd.x / 2, y: obb.y0 }),
+      upperRight: new Point({ x: obb.x1 - (1 - spacing) * obd.x / 2, y: obb.y0 })
     })
     pc.addBounds(obb)
 
@@ -647,7 +696,7 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
       sidePc.transform({
         type: 'translate',
         angle: rotAngle + angle,
-        x: isW ? 0 : (isRight ? 1 : -1 ) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
+        x: isW ? 0 : (isRight ? 1 : -1) * sidePcPoints.bottomLeft.distanceTo(sidePcPoints.bottomRight),
         y: -widthOffset
       })
       if (limiter.shouldRender(

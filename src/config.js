@@ -19,6 +19,8 @@ module.exports = class Config {
       narrowRatio: 0.5,
       wideRatio: 1.5,
       spaceRatio: 1,
+      CChildAngle: 0.02,
+      CChildSize: 0.8,
       ELegSize: 0.5,
       IChildSize: 0.45,
       KChildAngleDeg: 45,
@@ -39,7 +41,7 @@ module.exports = class Config {
       TChildSize: 0.5,
       WSpacing: 0.5,
       WDepth: 0.8,
-      WChildSize: 0.8,
+      WChildSize: 0.8
     }
 
     this.dat = new dat.GUI()
@@ -60,6 +62,8 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'narrowRatio', 0.01, 5),
       datSs.add(this.samsSerifConfig, 'wideRatio', 0.01, 5),
       datSs.add(this.samsSerifConfig, 'spaceRatio', 0.01, 5),
+      datSs.add(this.samsSerifConfig, 'CChildAngle', 0.001, 0.99),
+      datSs.add(this.samsSerifConfig, 'CChildSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'ELegSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
       datSs.add(this.samsSerifConfig, 'KChildAngleDeg', -180, 180),
@@ -80,7 +84,7 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'TChildSize', 0.01, 1),
       datSs.add(this.samsSerifConfig, 'WSpacing', 0.01, 1),
       datSs.add(this.samsSerifConfig, 'WDepth', 0, 1),
-      datSs.add(this.samsSerifConfig, 'WChildSize', 0.01, 1),
+      datSs.add(this.samsSerifConfig, 'WChildSize', 0.01, 1)
     ]
 
     KeyLogger.stopPropagation(this.dat.domElement)

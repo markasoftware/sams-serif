@@ -15,9 +15,9 @@ module.exports = class PointCluster {
     }
   }
 
-  addBounds(bounds) {
+  addBounds (bounds) {
     this.points.topLeft = new Point({ x: bounds.x0, y: bounds.y0 })
-    this.points.topRight = new Point({x: bounds.x1, y: bounds.y0 })
+    this.points.topRight = new Point({ x: bounds.x1, y: bounds.y0 })
     this.points.bottomRight = new Point({ x: bounds.x1, y: bounds.y1 })
     this.points.bottomLeft = new Point({ x: bounds.x0, y: bounds.y1 })
   }
@@ -26,7 +26,7 @@ module.exports = class PointCluster {
     return this.points
   }
 
-  getCartesians() {
+  getCartesians () {
     return mapValues(this.points, c => c.asCartesian())
   }
 
