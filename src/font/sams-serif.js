@@ -81,17 +81,19 @@ const samsSerif = opts => ({
   'C': {
     ratio: 0.5,
     render: (ctx, origBox, limiter) => {
-      const childAngle = opts.CChildAngle;
-      const childSize = opts.CChildSize;
+      const startAngle = Math.PI + opts.CAngle * deg
+      const endAngle = Math.PI - opts.CAngle * deg
+      const childAngle = opts.CChildAngle
+      const childSize = opts.CChildSize
 
-      const origBounds = origBox.getBounds();
-      const baseArc = { xCenter: origBounds.x1, yCenter: origBounds.y1 / 2 + origBounds.y0 / 2, radius: origBox.getDimensions().y / 2, angle: Math.PI / 2 }
+      const origBounds = origBox.getBounds()
+      const baseArc = { xCenter: origBounds.x1, yCenter: origBounds.y1 / 2 + origBounds.y0 / 2, radius: origBox.getDimensions().y / 2, startAngle }
 
       limiter.threePartRender(find, toRadius, draw)
 
       function find(pushToMe) {
         pushToMe.push(baseArc)
-        findChildren({ ...baseArc, angle: 0 }, pushToMe)
+        findChildren({ ...baseArc, startAngle: endAngle }, pushToMe)
       }
 
       function findChildren(lastArc, pushToMe) {
@@ -99,16 +101,15 @@ const samsSerif = opts => ({
         if (!limiter.shouldRenderRadius(radius)) {
           return
         }
-        // or, alternatively, Math.PI / 2 - (Math.PI / 2 - lastArc.angle) * childAngle
-        const angle = lastArc.angle + (Math.PI / 2 - lastArc.angle) * childAngle;
-        const xArcStart = baseArc.xCenter - Math.cos(angle) * baseArc.radius
-        const yArcStart = baseArc.yCenter + Math.sin(angle) * baseArc.radius
+        const startAngle = lastArc.startAngle + (baseArc.startAngle - lastArc.startAngle) * childAngle;
+        const xArcStart = baseArc.xCenter + Math.cos(startAngle) * baseArc.radius
+        const yArcStart = baseArc.yCenter - Math.sin(startAngle) * baseArc.radius
         const arc = {
           xArcStart,
           yArcStart,
-          xCenter: xArcStart + Math.cos(angle) * radius,
-          yCenter: yArcStart - Math.sin(angle) * radius,
-          angle,
+          xCenter: xArcStart - Math.cos(startAngle) * radius,
+          yCenter: yArcStart + Math.sin(startAngle) * radius,
+          startAngle,
           radius,
         }
         pushToMe.push(arc)
@@ -122,7 +123,9 @@ const samsSerif = opts => ({
       function draw(arc) {
         // i wish this wasn't necessary
         ctx.moveTo(arc.xArcStart, arc.yArcStart)
-        ctx.arc(arc.xCenter, arc.yCenter, arc.radius, Math.PI - arc.angle, -Math.PI / 2)
+        // negative angles are because arc measures angles clockwise
+        ctx.arc(arc.xCenter, arc.yCenter, arc.radius, -arc.startAngle, -endAngle)
+        console.log(arc)
       }
     }
   },
