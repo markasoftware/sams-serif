@@ -88,6 +88,7 @@ const samsSerif = opts => ({
 
       const origBounds = origBox.getBounds()
       const baseArc = { xCenter: origBounds.x1, yCenter: origBounds.y1 / 2 + origBounds.y0 / 2, radius: origBox.getDimensions().y / 2, startAngle }
+      const baseWidth = limiter.getWidthByRadius(baseArc.radius)
 
       limiter.threePartRender(find, toRadius, draw)
 
@@ -101,9 +102,10 @@ const samsSerif = opts => ({
         if (!limiter.shouldRenderRadius(radius)) {
           return
         }
+        const arcWidth = limiter.getWidthByRadius(radius)
         const startAngle = lastArc.startAngle + (baseArc.startAngle - lastArc.startAngle) * childAngle;
-        const xArcStart = baseArc.xCenter + Math.cos(startAngle) * baseArc.radius
-        const yArcStart = baseArc.yCenter - Math.sin(startAngle) * baseArc.radius
+        const xArcStart = baseArc.xCenter + Math.cos(startAngle) * (baseArc.radius - baseWidth / 2 + arcWidth / 2)
+        const yArcStart = baseArc.yCenter - Math.sin(startAngle) * (baseArc.radius - baseWidth / 2 + arcWidth / 2)
         const arc = {
           xArcStart,
           yArcStart,
@@ -125,7 +127,6 @@ const samsSerif = opts => ({
         ctx.moveTo(arc.xArcStart, arc.yArcStart)
         // negative angles are because arc measures angles clockwise
         ctx.arc(arc.xCenter, arc.yCenter, arc.radius, -arc.startAngle, -endAngle)
-        console.log(arc)
       }
     }
   },
@@ -476,7 +477,6 @@ const samsSerif = opts => ({
         -legRatio * ntan - ratio
       )
       const childPositionYRatio = legRatio * childPositionXRatio / ratio - legRatio
-      console.log(childPositionXRatio, childPositionYRatio)
 
       limiter.threePartRender(find, toRadius, draw)
 
