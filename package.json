@@ -1,8 +1,9 @@
 {
   "scripts": {
     "test": "tape test/*.js | tap-summary",
-    "build": "cp src/index.html dist && browserify --debug -o dist/bundle.js src/main.js",
-    "watch": "find src | entr npm run build",
+    "build": "cp src/index.html dist && browserify -o dist/bundle.js src/main.js",
+    "build:dev": "cp src/index.html dist && browserify --debug -o dist/bundle.js src/main.js",
+    "watch": "find src | entr npm run build:dev",
     "document": "esdoc"
   },
   "dependencies": {

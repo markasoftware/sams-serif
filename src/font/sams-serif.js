@@ -92,13 +92,13 @@ const samsSerif = opts => ({
 
       limiter.threePartRender(find, toRadius, draw)
 
-      function find(pushToMe) {
+      function find (pushToMe) {
         pushToMe.push(baseArc)
         findChildren({ ...baseArc, startAngle: endAngle }, pushToMe)
       }
 
-      function findChildren(lastArc, pushToMe) {
-        const radius = lastArc.radius * childSize;
+      function findChildren (lastArc, pushToMe) {
+        const radius = lastArc.radius * childSize
         if (!limiter.shouldRenderRadius(radius)) {
           return
         }
@@ -122,7 +122,7 @@ const samsSerif = opts => ({
         return arc.radius
       }
 
-      function draw(arc) {
+      function draw (arc) {
         // i wish this wasn't necessary
         ctx.moveTo(arc.xArcStart, arc.yArcStart)
         // negative angles are because arc measures angles clockwise
@@ -178,6 +178,57 @@ const samsSerif = opts => ({
 
       function draw (queueItem) {
         limiter.drawHorizontalLine(xLeft, queueItem.y, queueItem.length)
+      }
+    }
+  },
+
+  'H': {
+    ratio: opts.standardRatio,
+    render: (ctx, origBox, limiter) => {
+      const ratio = opts.standardRatio
+      const childSize = opts.HChildSize
+
+      const yCenter = origBox.getCenter().y
+
+      limiter.threePartRender(find, toRadius, draw)
+
+      function find (pushToMe) {
+        const root = {
+          width: origBox.getDimensions().x,
+          x: origBox.getBounds().x0,
+          y: origBox.getBounds().y1,
+        }
+        pushToMe.push(root)
+
+        const rootWidthHalf = limiter.getWidthByRadius(origBox.getRadius()) / 2
+        const initialChildWidth = origBox.getDimensions().x * childSize
+        findChildren(origBox.getBounds().x0, yCenter - rootWidthHalf, initialChildWidth, pushToMe)
+        findChildren(origBox.getBounds().x1, yCenter + rootWidthHalf, -initialChildWidth, pushToMe)
+      }
+
+      function findChildren (x, y, width, pushToMe) {
+        const toPush = {width, x, y}
+        if (limiter.shouldRenderRadius(toRadius(toPush))) {
+          pushToMe.push(toPush)
+
+          const newWidth = width * childSize
+          findChildren(x + newWidth, y, newWidth, pushToMe)
+        }
+      }
+
+      function toRadius (c) {
+        return 0.5 * (c.width ** 2 + (c.width / ratio) ** 2) ** 0.5
+      }
+
+      // negative width indicates that h is to the left of xLast and below yLast
+      // simply width/radius would give a negative height, which actually means up
+      // so we have to negate it, -width/radius
+      function draw (c) {
+        const height = -c.width / ratio
+        // c.x is of left edge
+        limiter.drawVerticalLine(c.x, c.y, height)
+        limiter.drawVerticalLine(c.x + c.width, c.y, height)
+        limiter.drawHorizontalLine(c.x, c.y + height / 2, c.width)
       }
     }
   },
