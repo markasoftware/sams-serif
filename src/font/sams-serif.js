@@ -189,30 +189,37 @@ const samsSerif = opts => ({
       const childSize = opts.HChildSize
 
       const yCenter = origBox.getCenter().y
+      const rootWidth = limiter.getWidthByRadius(origBox.getRadius())
+      // yeah i know the performance isn't affected
+      const rootWidthHalf = rootWidth / 2
+      const maxChildHeight = (origBox.getDimensions().y - rootWidth) / 2
 
       limiter.threePartRender(find, toRadius, draw)
 
       function find (pushToMe) {
+
         const root = {
           width: origBox.getDimensions().x,
           x: origBox.getBounds().x0,
           y: origBox.getBounds().y1,
+          maxHeight: Infinity,
         }
         pushToMe.push(root)
 
-        const rootWidthHalf = limiter.getWidthByRadius(origBox.getRadius()) / 2
-        const initialChildWidth = origBox.getDimensions().x * childSize
-        findChildren(origBox.getBounds().x0, yCenter - rootWidthHalf, initialChildWidth, pushToMe)
-        findChildren(origBox.getBounds().x1, yCenter + rootWidthHalf, -initialChildWidth, pushToMe)
+        // I'm not sure why it is rootWidthHalf here -- shouldn't we be subtracting the full width?
+        // but alas, that leaves empty space on the right end.
+        const initialChildWidth = (origBox.getDimensions().x - rootWidthHalf) * childSize
+        findChildren(origBox.getBounds().x0, Math.ceil(yCenter - rootWidthHalf), initialChildWidth, pushToMe)
+        findChildren(origBox.getBounds().x1, Math.floor(yCenter + rootWidthHalf), -initialChildWidth, pushToMe)
       }
 
       function findChildren (x, y, width, pushToMe) {
-        const toPush = {width, x, y}
+        const toPush = {width, x, y, maxHeight: maxChildHeight}
         if (limiter.shouldRenderRadius(toRadius(toPush))) {
           pushToMe.push(toPush)
 
           const newWidth = width * childSize
-          findChildren(x + newWidth, y, newWidth, pushToMe)
+          findChildren(x + width, y, newWidth, pushToMe)
         }
       }
 
@@ -224,7 +231,7 @@ const samsSerif = opts => ({
       // simply width/radius would give a negative height, which actually means up
       // so we have to negate it, -width/radius
       function draw (c) {
-        const height = -c.width / ratio
+        const height = clampAbs(-c.width / ratio, c.maxHeight)
         // c.x is of left edge
         limiter.drawVerticalLine(c.x, c.y, height)
         limiter.drawVerticalLine(c.x + c.width, c.y, height)
@@ -628,6 +635,11 @@ const samsSerif = opts => ({
 
 })
 module.exports = samsSerif
+
+// clamp a number below an absolute value maximum
+function clampAbs (num, max) {
+  return Math.min(Math.max(-max, num))
+}
 
 function renderILike (ctx, origBox, limiter, renderTop, renderBottom, childSize, ratio) {
   // BEGIN CONFIGURATION
