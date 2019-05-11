@@ -1,6 +1,5 @@
 'use strict'
 
-const assert = require('assert')
 const mapValues = require('just-map-values')
 
 const Box = require('./box')

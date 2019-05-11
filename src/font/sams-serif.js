@@ -103,7 +103,7 @@ const samsSerif = opts => ({
           return
         }
         const arcWidth = limiter.getWidthByRadius(radius)
-        const startAngle = lastArc.startAngle + (baseArc.startAngle - lastArc.startAngle) * childAngle;
+        const startAngle = lastArc.startAngle + (baseArc.startAngle - lastArc.startAngle) * childAngle
         const xArcStart = baseArc.xCenter + Math.cos(startAngle) * (baseArc.radius - baseWidth / 2 + arcWidth / 2)
         const yArcStart = baseArc.yCenter - Math.sin(startAngle) * (baseArc.radius - baseWidth / 2 + arcWidth / 2)
         const arc = {
@@ -112,7 +112,7 @@ const samsSerif = opts => ({
           xCenter: xArcStart - Math.cos(startAngle) * radius,
           yCenter: yArcStart + Math.sin(startAngle) * radius,
           startAngle,
-          radius,
+          radius
         }
         pushToMe.push(arc)
         findChildren(arc, pushToMe)
@@ -134,51 +134,14 @@ const samsSerif = opts => ({
   'E': {
     ratio: opts.standardRatio,
     render: (ctx, origBox, limiter) => {
-      const initLength = origBox.getDimensions().x
-      const verticalLineWidth = limiter.getWidthByRadius(origBox.getDimensions().y / 2)
-      const xLeft = Math.floor(origBox.getBounds().x0 + verticalLineWidth / 2)
+      drawELike(limiter, origBox, opts.ELegSize, true, true)
+    }
+  },
 
-      limiter.threePartRender(find, toRadius, draw)
-
-      // vertical line
-      limiter.preDraw(origBox.getDimensions().y / 2)
-      limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y, true)
-
-      // big top and bottom lines. Yeah Linus, it's not "good taste"
-      draw({ y: origBox.getBounds().y0, length: initLength })
-      draw({ y: origBox.getBounds().y1, length: initLength })
-
-      function find (pushToMe) {
-        findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength, pushToMe)
-      }
-
-      /**
-       * @param {number} the y position of the center thing
-       * @param {number} yRadius how far from the y center the next, smaller legs should be
-       * @param {number} the length of the leg at the center
-       */
-      function findELegs (yCenter, yRadius, length, pushToMe) {
-        if (limiter.shouldRender(new Box({
-          x0: xLeft,
-          x1: xLeft + length,
-          y0: yCenter - yRadius * 2,
-          y1: yCenter + yRadius * 2
-        }))) {
-          pushToMe.push({ y: yCenter, length })
-          if (limiter.shouldRenderRadius(length * opts.ELegSize / 2)) {
-            findELegs(yCenter - yRadius, yRadius / 2, length * opts.ELegSize, pushToMe)
-            findELegs(yCenter + yRadius, yRadius / 2, length * opts.ELegSize, pushToMe)
-          }
-        }
-      }
-
-      function toRadius (c) {
-        return c.length / 2
-      }
-
-      function draw (queueItem) {
-        limiter.drawHorizontalLine(xLeft, queueItem.y, queueItem.length)
-      }
+  'F': {
+    ratio: opts.standardRatio,
+    render: (ctx, origBox, limiter) => {
+      drawELike(limiter, origBox, opts.FLegSize, true, false)
     }
   },
 
@@ -197,12 +160,11 @@ const samsSerif = opts => ({
       limiter.threePartRender(find, toRadius, draw)
 
       function find (pushToMe) {
-
         const root = {
           width: origBox.getDimensions().x,
           x: origBox.getBounds().x0,
           y: origBox.getBounds().y1,
-          maxHeight: Infinity,
+          maxHeight: Infinity
         }
         pushToMe.push(root)
 
@@ -214,7 +176,7 @@ const samsSerif = opts => ({
       }
 
       function findChildren (x, y, width, pushToMe) {
-        const toPush = {width, x, y, maxHeight: maxChildHeight}
+        const toPush = { width, x, y, maxHeight: maxChildHeight }
         if (limiter.shouldRenderRadius(toRadius(toPush))) {
           pushToMe.push(toPush)
 
@@ -741,7 +703,6 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
     side(false)
 
     function side (isRight) {
-      const points = pc.getPoints()
       const cartesians = pc.getCartesians()
       const sidePc = new PointCluster(pc)
 
@@ -786,5 +747,57 @@ function renderMLike (ctx, origBox, limiter, spacing, depth, childSize, isW) {
     ctx.lineTo(cartesians.center.x, cartesians.center.y)
     ctx.lineTo(cartesians.upperRight.x, cartesians.upperRight.y)
     ctx.lineTo(cartesians.bottomRight.x, cartesians.bottomRight.y)
+  }
+}
+
+function drawELike (limiter, origBox, childLegSize, drawTop, drawBottom) {
+  const initLength = origBox.getDimensions().x
+  const verticalLineWidth = limiter.getWidthByRadius(origBox.getDimensions().y / 2)
+  const xLeft = Math.floor(origBox.getBounds().x0 + verticalLineWidth / 2)
+
+  limiter.threePartRender(find, toRadius, draw)
+
+  // vertical line
+  limiter.preDraw(origBox.getDimensions().y / 2)
+  limiter.drawVerticalLine(origBox.getBounds().x0, origBox.getBounds().y0, origBox.getDimensions().y, true)
+
+  // big top and bottom lines. Yeah Linus, it's not "good taste"
+  if (drawTop) {
+    draw({ y: origBox.getBounds().y0, length: initLength })
+  }
+  if (drawBottom) {
+    draw({ y: origBox.getBounds().y1, length: initLength })
+  }
+
+  function find (pushToMe) {
+    findELegs(origBox.getCenter().y, origBox.getDimensions().y / 4, initLength, pushToMe)
+  }
+
+  /**
+    * @param {number} the y position of the center thing
+    * @param {number} yRadius how far from the y center the next, smaller legs should be
+    * @param {number} the length of the leg at the center
+    */
+  function findELegs (yCenter, yRadius, length, pushToMe) {
+    if (limiter.shouldRender(new Box({
+      x0: xLeft,
+      x1: xLeft + length,
+      y0: yCenter - yRadius * 2,
+      y1: yCenter + yRadius * 2
+    }))) {
+      pushToMe.push({ y: yCenter, length })
+      if (limiter.shouldRenderRadius(length * childLegSize / 2)) {
+        findELegs(yCenter - yRadius, yRadius / 2, length * childLegSize, pushToMe)
+        findELegs(yCenter + yRadius, yRadius / 2, length * childLegSize, pushToMe)
+      }
+    }
+  }
+
+  function toRadius (c) {
+    return c.length / 2
+  }
+
+  function draw (queueItem) {
+    limiter.drawHorizontalLine(xLeft, queueItem.y, queueItem.length)
   }
 }

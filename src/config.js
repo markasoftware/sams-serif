@@ -23,6 +23,7 @@ module.exports = class Config {
       CChildAngle: 0.15,
       CChildSize: 0.85,
       ELegSize: 0.5,
+      FLegSize: 0.5,
       HChildSize: 0.5,
       IChildSize: 0.45,
       KChildAngleDeg: 45,
@@ -46,7 +47,7 @@ module.exports = class Config {
       WChildSize: 0.8
     }
 
-    this.dat = new dat.GUI()
+    this.dat = new dat.GUI({ hideable: false })
 
     const datRender = this.dat.addFolder('Renderer Settings')
     const datSs = this.dat.addFolder("Sam's Serif Settings")
@@ -68,6 +69,7 @@ module.exports = class Config {
       datSs.add(this.samsSerifConfig, 'CChildAngle', 0.001, 0.99),
       datSs.add(this.samsSerifConfig, 'CChildSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'ELegSize', 0.01, 0.99),
+      datSs.add(this.samsSerifConfig, 'FLegSize', 0.01, 0.99),
       datSs.add(this.samsSerifConfig, 'HChildSize', 0.01, 0.5),
       datSs.add(this.samsSerifConfig, 'IChildSize', 0.01, 0.499),
       datSs.add(this.samsSerifConfig, 'KChildAngleDeg', -180, 180),
